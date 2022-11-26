@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { IPokemon } from 'src/model/pokemon';
 
 @Component({
   selector: 'app-pokemon-card',
@@ -6,5 +7,6 @@ import { Component } from '@angular/core';
   styleUrls: ['./pokemon-card.component.sass']
 })
 export class PokemonCardComponent {
-
+  @Input()
+  public pokemon!: IPokemon;
 }
