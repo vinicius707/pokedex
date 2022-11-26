@@ -10,12 +10,38 @@ import { Type } from 'src/model/type';
 export class PokemonListComponent {
   public pokemons: IPokemon[] = [
     {
-      image: '',
+      image: 'https://assets.pokemon.com/assets/cms2/img/pokedex/detail/001.png',
       number: 1,
       name: 'Bulbassaur',
       types: [
         Type.Grass,
         Type.Poison
+      ]
+    },
+    {
+      image: 'https://assets.pokemon.com/assets/cms2/img/pokedex/detail/002.png',
+      number: 2,
+      name: 'Ivysaur',
+      types: [
+        Type.Grass,
+        Type.Poison
+      ]
+    },
+    {
+      image: 'https://assets.pokemon.com/assets/cms2/img/pokedex/detail/003.png',
+      number: 3,
+      name: 'Venosaur',
+      types: [
+        Type.Grass,
+        Type.Poison
+      ]
+    },
+    {
+      image: 'https://assets.pokemon.com/assets/cms2/img/pokedex/detail/004.png',
+      number: 4,
+      name: 'Charmander',
+      types: [
+        Type.Fire
       ]
     },
   ];
