@@ -1,4 +1,41 @@
-<app-pokemon-card
-  *ngFor="let pokemon of pokemonService.pokemonList()"
-  [pokemon]="pokemon"
-></app-pokemon-card>
+<div class="pokemon-list-container">
+  <div *ngIf="pokemonService.loading()" class="loading">
+    Carregando pokemons...
+  </div>
+
+  <div class="pokemon-grid" *ngIf="!pokemonService.loading()">
+    <app-pokemon-card
+      *ngFor="let pokemon of pokemonService.paginatedPokemons()"
+      [pokemon]="pokemon"
+    ></app-pokemon-card>
+  </div>
+
+  <div class="pagination" *ngIf="pokemonService.totalPages() > 0">
+    <button
+      class="pagination-button"
+      [disabled]="pokemonService.currentPage() === 1"
+      (click)="previousPage()"
+    >
+      Anterior
+    </button>
+
+    <div class="pagination-numbers">
+      <button
+        *ngFor="let page of getPageNumbers()"
+        class="pagination-number"
+        [class.active]="page === pokemonService.currentPage()"
+        (click)="goToPage(page)"
+      >
+        {{ page }}
+      </button>
+    </div>
+
+    <button
+      class="pagination-button"
+      [disabled]="pokemonService.currentPage() === pokemonService.totalPages()"
+      (click)="nextPage()"
+    >
+      Próximo
+    </button>
+  </div>
+</div>
