@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { PokemonListComponent } from './pokemon-list/pokemon-list.component';
+import { PokemonListComponent } from './features/pokedex/components/pokemon-list/pokemon-list.component';
 
 @Component({
   selector: 'app-root',

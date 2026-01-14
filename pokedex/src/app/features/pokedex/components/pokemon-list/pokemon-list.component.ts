@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { PokemonCardComponent } from '../pokemon-card/pokemon-card.component';
-import { PokemonService } from '../services/pokemon.service';
+import { PokemonService } from '../../../../core/services/pokemon.service';
 
 @Component({
   selector: 'app-pokemon-list',

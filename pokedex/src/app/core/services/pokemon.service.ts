@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, signal } from '@angular/core';
 import { from } from 'rxjs';
-import { Pokemon } from 'src/model/pokemon';
+import { Pokemon } from 'src/app/shared/models/pokemon';
 import { map, mergeMap } from 'rxjs/operators';
 
 @Injectable({

@@ -1,6 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { getPokemonImage, getPokemonNumber, Pokemon } from 'src/model/pokemon';
+import {
+  getPokemonImage,
+  getPokemonNumber,
+  Pokemon
+} from 'src/app/shared/models/pokemon';
 
 @Component({
   selector: 'app-pokemon-card',

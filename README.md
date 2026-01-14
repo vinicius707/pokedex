@@ -1,6 +1,6 @@
 # Pokedex (Angular + Sass)
 
-Projeto de estudo que implementa uma Pokedex simples em Angular, seguindo o passo a passo do video do Paulo Salvatore. A aplicacao consome a PokeAPI para listar pokemons e renderiza cards com imagem, numero, nome e tipos.
+Projeto de estudo que implementa uma Pokedex simples em Angular, seguindo o passo a passo do video do Paulo Salvatore. A aplicacao consome a PokeAPI para listar pokemons e renderiza cards com imagem, numero, nome e tipos. A base foi modernizada para Angular 21 com componentes standalone e signals.
 
 ## Funcionalidades
 
@@ -10,11 +10,13 @@ Projeto de estudo que implementa uma Pokedex simples em Angular, seguindo o pass
 
 ## Tecnologias
 
-- Angular 18
-- TypeScript 5.4
+- Angular 21
+- TypeScript 5.9
 - Sass
 - RxJS
 - PokeAPI
+- Signals
+- Standalone components
 
 ## Como executar
 
@@ -46,10 +48,10 @@ Abra `http://localhost:4200`.
 
 ## Estrutura (resumo)
 
-- `pokedex/src/app/services/pokemon.service.ts`: consumo da PokeAPI
-- `pokedex/src/app/pokemon-list`: lista de pokemons
-- `pokedex/src/app/pokemon-card`: card individual
-- `pokedex/src/model`: modelos e helpers
+- `pokedex/src/app/core/services/pokemon.service.ts`: consumo da PokeAPI e estado via signals
+- `pokedex/src/app/features/pokedex/components/pokemon-list`: lista de pokemons
+- `pokedex/src/app/features/pokedex/components/pokemon-card`: card individual
+- `pokedex/src/app/shared/models`: modelos e helpers
 
 ## Creditos
 
