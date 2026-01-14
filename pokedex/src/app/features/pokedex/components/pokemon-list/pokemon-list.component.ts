@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, computed } from '@angular/core';
 import { PokemonCardComponent } from '../pokemon-card/pokemon-card.component';
 import { PokemonService } from '../../../../core/services/pokemon.service';
 
@@ -26,7 +26,7 @@ export class PokemonListComponent {
   
   constructor(public pokemonService: PokemonService) {}
 
-  getPaginationInfo(): PaginationInfo {
+  public readonly paginationInfo = computed<PaginationInfo>(() => {
     const total = this.pokemonService.totalPages();
     const current = this.pokemonService.currentPage();
     const items: PageItem[] = [];
@@ -91,7 +91,7 @@ export class PokemonListComponent {
       currentPage: current,
       totalPages: total
     };
-  }
+  });
 
   getPageInfo(): string {
     const current = this.pokemonService.currentPage();
@@ -108,6 +108,13 @@ export class PokemonListComponent {
       return false;
     }
     return item === this.pokemonService.currentPage();
+  }
+
+  isCurrentPageItem(item: PageItem, currentPage: number): boolean {
+    if (this.isEllipsis(item)) {
+      return false;
+    }
+    return item === currentPage;
   }
 
   getPageNumber(item: PageItem): number | null {

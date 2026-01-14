@@ -56,13 +56,15 @@ export class PokemonService {
   }
 
   public loadPage(page: number): void {
-    if (page < 1 || page > this.totalPages()) {
+    const totalPages = this.totalPages();
+    if (page < 1 || page > totalPages) {
       return;
     }
 
     const startIndex = (page - 1) * this.pageSize + 1;
     const endIndex = Math.min(startIndex + this.pageSize - 1, this.totalPokemons());
     
+    // Verificar quais pokemons precisam ser carregados
     const pokemonsToLoad: number[] = [];
     for (let i = startIndex; i <= endIndex; i++) {
       if (!this.pokemonsCache.has(i)) {
@@ -70,6 +72,7 @@ export class PokemonService {
       }
     }
 
+    // Se todos já estão no cache, apenas atualizar a página
     if (pokemonsToLoad.length === 0) {
       this.currentPage.set(page);
       return;
@@ -100,17 +103,15 @@ export class PokemonService {
           this.pokemonsCache.set(result.id, pokemon);
         },
         complete: () => {
-          // Garantir que todos os pokemons da pagina estao no cache antes de atualizar
+          // Verificar se todos os pokemons da página foram carregados
+          // (importante porque podem chegar fora de ordem)
           const startId = (page - 1) * this.pageSize + 1;
           const endId = Math.min(startId + this.pageSize - 1, this.totalPokemons());
-          let allLoaded = true;
           
-          for (let id = startId; id <= endId; id++) {
-            if (!this.pokemonsCache.has(id)) {
-              allLoaded = false;
-              break;
-            }
-          }
+          // Verificar apenas os IDs que precisavam ser carregados
+          const allLoaded = pokemonsToLoad.every(id => 
+            id >= startId && id <= endId && this.pokemonsCache.has(id)
+          );
           
           if (allLoaded) {
             this.currentPage.set(page);
