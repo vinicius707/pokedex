@@ -8,18 +8,24 @@ Este projeto consome a [PokeAPI](https://pokeapi.co/) para buscar informacoes so
 
 - **Standalone Components**: Arquitetura moderna do Angular sem NgModules
 - **Signals**: Sistema reativo nativo do Angular para gerenciamento de estado
+- **Computed Signals**: Derivacao reativa de estado para paginacao
 - **Arquitetura por Feature**: Organizacao modular baseada em features
 - **HTTP Client**: Consumo de APIs RESTful
 - **Sass**: Estilizacao moderna com pre-processador CSS
 
 ## Funcionalidades
 
-- 📋 Lista dos primeiros 40 Pokemon da PokeAPI
+- 📋 Lista completa de todos os 1350+ Pokemon da PokeAPI
+- 📄 **Paginacao inteligente** com 10 Pokemon por pagina
+- 🔄 **Cache de dados** para navegacao rapida entre paginas ja visitadas
+- ⏮️ Navegacao: Primeira, Anterior, Proxima e Ultima pagina
+- 🔢 Indicadores de pagina com ellipsis para navegacao facil
 - 🎴 Cards visuais com imagem oficial de cada Pokemon
 - 🔢 Numero formatado (com zeros a esquerda)
 - 🏷️ Exibicao de tipos com cores diferenciadas
 - ⚡ Atualizacoes reativas usando Signals
 - 🎨 Interface responsiva estilizada com Sass
+- ♿ Acessibilidade com atributos ARIA
 
 ## Tecnologias
 
@@ -41,6 +47,7 @@ Este projeto consome a [PokeAPI](https://pokeapi.co/) para buscar informacoes so
 
 - **Standalone Components** - Componentes independentes
 - **Signals** - Sistema reativo nativo
+- **Computed Signals** - Derivacao de estado
 
 ## Pre-requisitos
 
@@ -90,13 +97,13 @@ pokedex/
 │   ├── app/
 │   │   ├── core/                    # Camada core da aplicacao
 │   │   │   └── services/
-│   │   │       └── pokemon.service.ts    # Servico de consumo da API
+│   │   │       └── pokemon.service.ts    # Servico com paginacao e cache
 │   │   │
 │   │   ├── features/                # Features da aplicacao
 │   │   │   └── pokedex/
 │   │   │       └── components/
-│   │   │           ├── pokemon-list/     # Componente de lista
-│   │   │           └── pokemon-card/     # Componente de card
+│   │   │           ├── pokemon-list/     # Lista com paginacao
+│   │   │           └── pokemon-card/     # Card individual
 │   │   │
 │   │   ├── shared/                  # Recursos compartilhados
 │   │   │   └── models/
@@ -123,12 +130,51 @@ O projeto segue uma arquitetura por **feature** com separacao clara de responsab
 - **`features/`**: Features completas da aplicacao (ex: pokedex com seus componentes)
 - **`shared/`**: Modelos, interfaces e utilitarios compartilhados
 
+### Sistema de Paginacao
+
+O sistema de paginacao foi implementado com foco em **performance** e **experiencia do usuario**:
+
+1. **Lazy Loading**: Apenas os Pokemon da pagina atual sao carregados
+2. **Cache Inteligente**: Pokemon ja carregados sao armazenados em um `Map`
+3. **Navegacao Instantanea**: Paginas em cache sao exibidas imediatamente
+4. **Indicadores Visuais**: Loading spinner durante carregamento
+
 ### Fluxo de Dados
 
-1. **PokemonService** consome a PokeAPI via HTTP Client
-2. Os dados sao armazenados em um **Signal** reativo
-3. Os componentes **pokemon-list** e **pokemon-card** consomem o signal
-4. A interface atualiza automaticamente quando o estado muda
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      PokemonService                          │
+├─────────────────────────────────────────────────────────────┤
+│  Signals:                                                    │
+│  - currentPage: signal(1)                                    │
+│  - totalPokemons: signal(0)                                  │
+│  - loading: signal(false)                                    │
+│                                                              │
+│  Computed Signals:                                           │
+│  - totalPages: computed(() => ...)                           │
+│  - paginatedPokemons: computed(() => ...)                    │
+│                                                              │
+│  Cache:                                                      │
+│  - pokemonsCache: Map<position, Pokemon>                     │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    PokemonListComponent                      │
+├─────────────────────────────────────────────────────────────┤
+│  - Consome paginatedPokemons do service                      │
+│  - Exibe controles de paginacao                              │
+│  - Computed signal: paginationInfo                           │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    PokemonCardComponent                      │
+├─────────────────────────────────────────────────────────────┤
+│  - Recebe Pokemon via @Input                                 │
+│  - Renderiza card visual                                     │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## Desenvolvimento
 
@@ -136,8 +182,17 @@ O projeto segue uma arquitetura por **feature** com separacao clara de responsab
 
 - **Standalone Components**: Todos os componentes sao standalone (sem NgModules)
 - **Signals**: Estado reativo gerenciado via Signals
+- **Computed Signals**: Estado derivado calculado automaticamente
 - **Injectable Services**: Servicos injetaveis com `providedIn: 'root'`
 - **HTTP Client**: Requisicoes HTTP usando HttpClient do Angular
+- **Cache Pattern**: Armazenamento em memoria para dados ja carregados
+
+### Otimizacoes de Performance
+
+1. **Paginacao**: Apenas 10 Pokemon carregados por vez
+2. **Cache**: Evita requisicoes duplicadas a API
+3. **Computed Signals**: Recalculo automatico apenas quando necessario
+4. **Lazy Loading**: Carregamento sob demanda
 
 ## Creditos
 
