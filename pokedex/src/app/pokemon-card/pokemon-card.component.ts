@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { getPokemonImage, getPokemonNumber, Pokemon } from 'src/model/pokemon';
 
@@ -5,6 +6,8 @@ import { getPokemonImage, getPokemonNumber, Pokemon } from 'src/model/pokemon';
   selector: 'app-pokemon-card',
   templateUrl: './pokemon-card.component.html',
   styleUrls: ['./pokemon-card.component.sass'],
+  standalone: true,
+  imports: [CommonModule]
 })
 export class PokemonCardComponent {
   @Input()
