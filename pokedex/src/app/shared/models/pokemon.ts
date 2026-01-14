@@ -45,7 +45,10 @@ export interface PokemonListItem {
 }
 
 export function getPokemonImage(pokemon: Pokemon | PokemonListItem): string {
-  if ('sprites' in pokemon && pokemon.sprites.other?.['official-artwork']?.front_default) {
+  if (
+    'sprites' in pokemon &&
+    pokemon.sprites.other?.['official-artwork']?.front_default
+  ) {
     return pokemon.sprites.other['official-artwork'].front_default;
   }
   return pokemon.image;
