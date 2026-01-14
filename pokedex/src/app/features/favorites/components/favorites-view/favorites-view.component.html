@@ -1,0 +1,42 @@
+<div class="favorites-view">
+  <div class="favorites-view__header">
+    <h1 class="favorites-view__title">Meus Favoritos</h1>
+    <p class="favorites-view__count" *ngIf="hasFavorites()">
+      {{ favoritesService.favoritesCount() }} Pokémon(s) favorito(s)
+    </p>
+    <button 
+      class="favorites-view__clear" 
+      *ngIf="hasFavorites()"
+      (click)="clearAll()"
+    >
+      Limpar todos
+    </button>
+  </div>
+
+  <div class="favorites-view__loading" *ngIf="loading()">
+    <p>Carregando favoritos...</p>
+  </div>
+
+  <div class="favorites-view__grid" *ngIf="!loading() && favoritePokemons().length > 0">
+    <a 
+      *ngFor="let pokemon of favoritePokemons()" 
+      [routerLink]="['/pokemon', pokemon.id]"
+      class="favorites-view__card-link"
+    >
+      <app-pokemon-card
+        [pokemon]="pokemon"
+        [isFavorite]="isFavorite(pokemon.id)"
+        (favoriteToggle)="onFavoriteToggle($event)"
+      ></app-pokemon-card>
+    </a>
+  </div>
+
+  <div class="favorites-view__empty" *ngIf="!loading() && !hasFavorites()">
+    <span class="favorites-view__empty-icon">☆</span>
+    <h2>Nenhum favorito ainda</h2>
+    <p>Clique no ícone de estrela em um Pokémon para adicioná-lo aos favoritos.</p>
+    <a routerLink="/" class="favorites-view__home-link">
+      Explorar Pokémon
+    </a>
+  </div>
+</div>

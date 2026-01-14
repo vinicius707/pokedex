@@ -1,21 +1,35 @@
-<div class="pokemon-card" *ngIf="pokemon">
+<div class="pokemon-card" *ngIf="pokemon" (click)="onCardClick()">
+  <button
+    class="pokemon-card__favorite"
+    [class.pokemon-card__favorite--active]="isFavorite"
+    (click)="onFavoriteClick($event)"
+    [attr.aria-label]="isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
+  >
+    <span *ngIf="isFavorite">★</span>
+    <span *ngIf="!isFavorite">☆</span>
+  </button>
+  
   <div class="pokemon-card__image">
     <img
-      [src]="getPokemonImage(pokemon)"
-      alt="Pokemon Image"
+      [src]="pokemon.image"
+      [alt]="pokemon.name"
+      loading="lazy"
     />
   </div>
+  
   <div class="pokemon-card__number">
     <p>N° {{ getPokemonNumber(pokemon) }}</p>
   </div>
+  
   <div class="pokemon-card__name">
     <p>{{ pokemon.name }}</p>
   </div>
+  
   <div class="pokemon-card__types">
     <div
       class="pokemon-card__type"
       *ngFor="let type of pokemon.types"
-      [class]="'pokemon-card__type--' + type.toLowerCase()"
+      [style.background-color]="getTypeColor(type)"
     >
       {{ type }}
     </div>

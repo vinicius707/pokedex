@@ -1,0 +1,116 @@
+.stats-comparison
+    background: #fff
+    border-radius: 12px
+    padding: 24px
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+
+    &__title
+        text-align: center
+        margin: 0 0 20px
+        font-size: 20px
+        color: #333
+
+    &__header
+        display: flex
+        justify-content: space-between
+        align-items: center
+        margin-bottom: 24px
+        padding-bottom: 16px
+        border-bottom: 1px solid #e0e0e0
+
+    &__name
+        font-size: 16px
+        font-weight: bold
+        color: #333
+        text-transform: capitalize
+
+    &__vs
+        font-size: 14px
+        color: #999
+        font-weight: bold
+
+    &__list
+        display: flex
+        flex-direction: column
+        gap: 16px
+
+    &__item
+        display: grid
+        grid-template-columns: 1fr 80px 1fr
+        align-items: center
+        gap: 12px
+
+    &__label
+        text-align: center
+        font-size: 13px
+        color: #666
+        font-weight: 500
+
+    &__bar-left,
+    &__bar-right
+        display: flex
+        align-items: center
+        height: 24px
+        position: relative
+
+    &__bar-left
+        flex-direction: row-reverse
+
+        .stats-comparison__bar-fill
+            border-radius: 4px 0 0 4px
+
+        .stats-comparison__value
+            margin-right: 8px
+
+    &__bar-right
+        .stats-comparison__bar-fill
+            border-radius: 0 4px 4px 0
+
+        .stats-comparison__value
+            margin-left: 8px
+
+    &__bar-fill
+        height: 100%
+        transition: width 0.5s ease
+        min-width: 4px
+
+    &__value
+        font-size: 13px
+        font-weight: bold
+        color: #333
+        min-width: 30px
+
+    &__bar--winner
+        .stats-comparison__value
+            color: #28a745
+
+    &__total
+        display: grid
+        grid-template-columns: 1fr 80px 1fr
+        align-items: center
+        margin-top: 24px
+        padding-top: 16px
+        border-top: 2px solid #e0e0e0
+
+    &__total-label
+        text-align: center
+        font-size: 16px
+        font-weight: bold
+        color: #333
+
+    &__total-left,
+    &__total-right
+        font-size: 20px
+        font-weight: bold
+        color: #333
+
+    &__total-left
+        text-align: right
+        padding-right: 20px
+
+    &__total-right
+        text-align: left
+        padding-left: 20px
+
+    &__total--winner
+        color: #28a745

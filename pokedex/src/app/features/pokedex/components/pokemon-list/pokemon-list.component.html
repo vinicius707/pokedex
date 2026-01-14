@@ -1,17 +1,30 @@
 <div class="pokemon-list-container">
+  <app-search-filter></app-search-filter>
+
   <div *ngIf="pokemonService.loading()" class="loading">
-    Carregando pokemons...
+    <div class="loading__spinner"></div>
+    <p>Carregando pokémons...</p>
   </div>
 
   <div class="pokemon-grid" *ngIf="!pokemonService.loading()">
     <app-pokemon-card
-      *ngFor="let pokemon of pokemonService.paginatedPokemons()"
+      *ngFor="let pokemon of pokemonService.filteredPokemons(); trackBy: trackByPokemon"
       [pokemon]="pokemon"
+      [isFavorite]="isFavorite(pokemon.id)"
+      (cardClick)="onCardClick($event)"
+      (favoriteToggle)="onFavoriteToggle($event)"
     ></app-pokemon-card>
   </div>
 
-  <div class="pagination-container" *ngIf="pokemonService.totalPages() > 0">
-    <nav class="pagination" aria-label="Paginação de pokemons">
+  <div 
+    class="no-results" 
+    *ngIf="!pokemonService.loading() && pokemonService.filteredPokemons().length === 0"
+  >
+    <p>Nenhum Pokémon encontrado com os filtros selecionados.</p>
+  </div>
+
+  <div class="pagination-container" *ngIf="pokemonService.totalPages() > 0 && !pokemonService.searchTerm() && !pokemonService.selectedType()">
+    <nav class="pagination" aria-label="Paginação de pokémons">
       <ng-container *ngIf="paginationInfo() as info">
         <div class="pagination-controls">
           <button

@@ -1,0 +1,74 @@
+.evolution-chain
+    padding: 20px
+    background: #fff
+    border-radius: 12px
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+
+    &__title
+        margin: 0 0 20px
+        font-size: 18px
+        color: #333
+
+    &__list
+        display: flex
+        align-items: center
+        justify-content: center
+        flex-wrap: wrap
+        gap: 10px
+
+    &__item
+        display: flex
+        flex-direction: column
+        align-items: center
+        padding: 10px
+        border-radius: 12px
+        transition: background 0.2s ease
+
+        &--current
+            background: rgba(220, 10, 45, 0.1)
+
+    &__link
+        display: flex
+        flex-direction: column
+        align-items: center
+        text-decoration: none
+        color: inherit
+
+        &:hover
+            .evolution-chain__image
+                transform: scale(1.1)
+
+    &__image
+        width: 80px
+        height: 80px
+        object-fit: contain
+        transition: transform 0.2s ease
+
+    &__name
+        margin-top: 8px
+        font-size: 14px
+        color: #333
+        font-weight: 500
+        text-transform: capitalize
+
+    &__arrow
+        display: flex
+        flex-direction: column
+        align-items: center
+        padding: 0 10px
+
+    &__arrow-icon
+        font-size: 24px
+        color: #999
+
+    &__trigger
+        font-size: 11px
+        color: #666
+        margin-top: 4px
+        text-align: center
+
+    &__empty
+        text-align: center
+        color: #666
+        font-size: 14px
+        margin: 0

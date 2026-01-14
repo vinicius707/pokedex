@@ -1,23 +1,43 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import {
-  getPokemonImage,
   getPokemonNumber,
-  Pokemon
+  PokemonListItem,
 } from 'src/app/shared/models/pokemon';
+import { TYPE_COLORS, Type } from 'src/app/shared/models/type';
 
 @Component({
   selector: 'app-pokemon-card',
   templateUrl: './pokemon-card.component.html',
   styleUrls: ['./pokemon-card.component.sass'],
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class PokemonCardComponent {
   @Input()
-  public pokemon!: Pokemon;
+  public pokemon!: PokemonListItem;
 
-  public getPokemonImage = getPokemonImage;
+  @Input()
+  public isFavorite: boolean = false;
+
+  @Output()
+  public cardClick = new EventEmitter<PokemonListItem>();
+
+  @Output()
+  public favoriteToggle = new EventEmitter<PokemonListItem>();
 
   public getPokemonNumber = getPokemonNumber;
+
+  public getTypeColor(type: Type): string {
+    return TYPE_COLORS[type] || '#A8A878';
+  }
+
+  public onCardClick(): void {
+    this.cardClick.emit(this.pokemon);
+  }
+
+  public onFavoriteClick(event: Event): void {
+    event.stopPropagation();
+    this.favoriteToggle.emit(this.pokemon);
+  }
 }

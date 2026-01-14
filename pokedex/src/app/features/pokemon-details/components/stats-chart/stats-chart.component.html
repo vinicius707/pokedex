@@ -1,0 +1,22 @@
+<div class="stats-chart">
+  <h3 class="stats-chart__title">Base Stats</h3>
+  
+  <div class="stats-chart__list">
+    <div class="stats-chart__item" *ngFor="let stat of stats">
+      <span class="stats-chart__label">{{ stat.name }}</span>
+      <span class="stats-chart__value">{{ stat.value }}</span>
+      <div class="stats-chart__bar-container">
+        <div 
+          class="stats-chart__bar"
+          [style.width.%]="getStatPercentage(stat.value)"
+          [style.background-color]="getStatColor(stat.name)"
+        ></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-chart__total">
+    <span class="stats-chart__total-label">Total</span>
+    <span class="stats-chart__total-value">{{ getTotalStats() }}</span>
+  </div>
+</div>

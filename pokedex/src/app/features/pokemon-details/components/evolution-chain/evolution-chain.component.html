@@ -1,0 +1,33 @@
+<div class="evolution-chain" *ngIf="chain.length > 0">
+  <h3 class="evolution-chain__title">Evolution Chain</h3>
+  
+  <div class="evolution-chain__list">
+    <ng-container *ngFor="let link of chain; let i = index; let last = last">
+      <div 
+        class="evolution-chain__item"
+        [class.evolution-chain__item--current]="link.id === currentPokemonId"
+      >
+        <a [routerLink]="['/pokemon', link.id]" class="evolution-chain__link">
+          <img 
+            [src]="link.image" 
+            [alt]="link.name"
+            class="evolution-chain__image"
+            loading="lazy"
+          />
+          <span class="evolution-chain__name">{{ capitalize(link.name) }}</span>
+        </a>
+      </div>
+      
+      <div class="evolution-chain__arrow" *ngIf="!last">
+        <span class="evolution-chain__arrow-icon">→</span>
+        <span class="evolution-chain__trigger" *ngIf="chain[i + 1] as nextLink">
+          {{ getEvolutionTrigger(nextLink) }}
+        </span>
+      </div>
+    </ng-container>
+  </div>
+  
+  <p class="evolution-chain__empty" *ngIf="chain.length === 1">
+    Este Pokémon não evolui.
+  </p>
+</div>

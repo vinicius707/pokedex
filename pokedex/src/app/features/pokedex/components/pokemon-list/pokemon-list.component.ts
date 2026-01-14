@@ -1,7 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed } from '@angular/core';
+import { Router } from '@angular/router';
 import { PokemonCardComponent } from '../pokemon-card/pokemon-card.component';
+import { SearchFilterComponent } from '../search-filter/search-filter.component';
 import { PokemonService } from '../../../../core/services/pokemon.service';
+import { FavoritesService } from '../../../../core/services/favorites.service';
+import { PokemonListItem } from '../../../../shared/models/pokemon';
 
 type PageItem = number | 'ellipsis';
 
@@ -20,11 +24,14 @@ interface PaginationInfo {
   templateUrl: './pokemon-list.component.html',
   styleUrls: ['./pokemon-list.component.sass'],
   standalone: true,
-  imports: [CommonModule, PokemonCardComponent]
+  imports: [CommonModule, PokemonCardComponent, SearchFilterComponent],
 })
 export class PokemonListComponent {
-  
-  constructor(public pokemonService: PokemonService) {}
+  constructor(
+    public pokemonService: PokemonService,
+    public favoritesService: FavoritesService,
+    private router: Router
+  ) {}
 
   public readonly paginationInfo = computed<PaginationInfo>(() => {
     const total = this.pokemonService.totalPages();
@@ -39,30 +46,25 @@ export class PokemonListComponent {
         showPrevious: false,
         showNext: false,
         currentPage: current,
-        totalPages: total
+        totalPages: total,
       };
     }
 
-    // Para poucas páginas (7 ou menos), mostrar todas
     if (total <= 7) {
       for (let i = 1; i <= total; i++) {
         items.push(i);
       }
     } else {
-      // Sempre mostrar primeira página
       items.push(1);
 
-      // Calcular páginas adjacentes (2 antes e 2 depois)
       const adjacentPages = 2;
       const start = Math.max(2, current - adjacentPages);
       const end = Math.min(total - 1, current + adjacentPages);
 
-      // Adicionar ellipsis antes se necessário
       if (start > 2) {
         items.push('ellipsis');
       }
 
-      // Adicionar páginas adjacentes (evitando duplicatas)
       const seen = new Set<number>([1]);
       for (let i = start; i <= end; i++) {
         if (!seen.has(i) && i !== total) {
@@ -71,12 +73,10 @@ export class PokemonListComponent {
         }
       }
 
-      // Adicionar ellipsis depois se necessário
       if (end < total - 1) {
         items.push('ellipsis');
       }
 
-      // Sempre mostrar última página
       if (!seen.has(total)) {
         items.push(total);
       }
@@ -89,25 +89,12 @@ export class PokemonListComponent {
       showPrevious: current > 1,
       showNext: current < total,
       currentPage: current,
-      totalPages: total
+      totalPages: total,
     };
   });
 
-  getPageInfo(): string {
-    const current = this.pokemonService.currentPage();
-    const total = this.pokemonService.totalPages();
-    return `Página ${current} de ${total}`;
-  }
-
   isEllipsis(item: PageItem): boolean {
     return item === 'ellipsis';
-  }
-
-  isCurrentPage(item: PageItem): boolean {
-    if (this.isEllipsis(item)) {
-      return false;
-    }
-    return item === this.pokemonService.currentPage();
   }
 
   isCurrentPageItem(item: PageItem, currentPage: number): boolean {
@@ -152,5 +139,21 @@ export class PokemonListComponent {
 
   trackByPageItem(index: number, item: PageItem): string | number {
     return item;
+  }
+
+  onCardClick(pokemon: PokemonListItem): void {
+    this.router.navigate(['/pokemon', pokemon.id]);
+  }
+
+  onFavoriteToggle(pokemon: PokemonListItem): void {
+    this.favoritesService.toggle(pokemon.id);
+  }
+
+  isFavorite(id: number): boolean {
+    return this.favoritesService.isFavorite(id);
+  }
+
+  trackByPokemon(index: number, pokemon: PokemonListItem): number {
+    return pokemon.id;
   }
 }

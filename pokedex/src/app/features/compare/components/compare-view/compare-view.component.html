@@ -1,0 +1,95 @@
+<div class="compare-view">
+  <h1 class="compare-view__title">Comparar Pokémon</h1>
+  <p class="compare-view__subtitle">Escolha dois Pokémon para comparar seus atributos</p>
+
+  <div class="compare-view__selectors">
+    <!-- Pokemon 1 -->
+    <div class="compare-view__selector">
+      <div class="compare-view__search" *ngIf="!pokemon1()">
+        <input
+          type="text"
+          [(ngModel)]="search1"
+          (keyup.enter)="searchPokemon1()"
+          placeholder="Nome ou número do Pokémon"
+          class="compare-view__input"
+        />
+        <button 
+          (click)="searchPokemon1()" 
+          class="compare-view__search-btn"
+          [disabled]="loading1()"
+        >
+          {{ loading1() ? 'Buscando...' : 'Buscar' }}
+        </button>
+      </div>
+      
+      <p class="compare-view__error" *ngIf="error1()">{{ error1() }}</p>
+
+      <div class="compare-view__pokemon" *ngIf="pokemon1() as p">
+        <button class="compare-view__clear" (click)="clearPokemon1()">×</button>
+        <img [src]="p.image" [alt]="p.name" class="compare-view__pokemon-image" />
+        <h3 class="compare-view__pokemon-name">{{ capitalize(p.name) }}</h3>
+        <div class="compare-view__types">
+          <span 
+            *ngFor="let type of p.types" 
+            class="compare-view__type"
+            [style.background-color]="getTypeColor(type)"
+          >
+            {{ type }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="compare-view__vs">VS</div>
+
+    <!-- Pokemon 2 -->
+    <div class="compare-view__selector">
+      <div class="compare-view__search" *ngIf="!pokemon2()">
+        <input
+          type="text"
+          [(ngModel)]="search2"
+          (keyup.enter)="searchPokemon2()"
+          placeholder="Nome ou número do Pokémon"
+          class="compare-view__input"
+        />
+        <button 
+          (click)="searchPokemon2()" 
+          class="compare-view__search-btn"
+          [disabled]="loading2()"
+        >
+          {{ loading2() ? 'Buscando...' : 'Buscar' }}
+        </button>
+      </div>
+      
+      <p class="compare-view__error" *ngIf="error2()">{{ error2() }}</p>
+
+      <div class="compare-view__pokemon" *ngIf="pokemon2() as p">
+        <button class="compare-view__clear" (click)="clearPokemon2()">×</button>
+        <img [src]="p.image" [alt]="p.name" class="compare-view__pokemon-image" />
+        <h3 class="compare-view__pokemon-name">{{ capitalize(p.name) }}</h3>
+        <div class="compare-view__types">
+          <span 
+            *ngFor="let type of p.types" 
+            class="compare-view__type"
+            [style.background-color]="getTypeColor(type)"
+          >
+            {{ type }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="compare-view__comparison" *ngIf="canCompare()">
+    <app-stats-comparison
+      [stats1]="pokemon1()!.stats"
+      [stats2]="pokemon2()!.stats"
+      [name1]="pokemon1()!.name"
+      [name2]="pokemon2()!.name"
+    ></app-stats-comparison>
+  </div>
+
+  <div class="compare-view__hint" *ngIf="!canCompare()">
+    <p>Selecione dois Pokémon para ver a comparação de stats</p>
+  </div>
+</div>

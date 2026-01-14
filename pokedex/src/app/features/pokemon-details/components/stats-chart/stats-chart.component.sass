@@ -1,0 +1,60 @@
+.stats-chart
+    padding: 20px
+    background: #fff
+    border-radius: 12px
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+
+    &__title
+        margin: 0 0 20px
+        font-size: 18px
+        color: #333
+
+    &__list
+        display: flex
+        flex-direction: column
+        gap: 12px
+
+    &__item
+        display: grid
+        grid-template-columns: 80px 40px 1fr
+        align-items: center
+        gap: 12px
+
+    &__label
+        font-size: 14px
+        color: #666
+        font-weight: 500
+
+    &__value
+        font-size: 14px
+        color: #333
+        font-weight: bold
+        text-align: right
+
+    &__bar-container
+        height: 8px
+        background: #e0e0e0
+        border-radius: 4px
+        overflow: hidden
+
+    &__bar
+        height: 100%
+        border-radius: 4px
+        transition: width 0.5s ease
+
+    &__total
+        display: flex
+        justify-content: space-between
+        margin-top: 20px
+        padding-top: 16px
+        border-top: 1px solid #e0e0e0
+
+    &__total-label
+        font-size: 16px
+        font-weight: bold
+        color: #333
+
+    &__total-value
+        font-size: 16px
+        font-weight: bold
+        color: #333

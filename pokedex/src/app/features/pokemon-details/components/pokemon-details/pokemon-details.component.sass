@@ -1,0 +1,206 @@
+.pokemon-details
+    min-height: 100vh
+
+    &__header
+        padding: 20px
+        padding-top: 40px
+        color: #fff
+        position: relative
+
+    &__back
+        position: absolute
+        top: 20px
+        left: 20px
+        color: rgba(255, 255, 255, 0.9)
+        text-decoration: none
+        font-size: 16px
+        padding: 8px 16px
+        border-radius: 8px
+        transition: background 0.2s ease
+
+        &:hover
+            background: rgba(255, 255, 255, 0.2)
+
+    &__header-content
+        max-width: 1000px
+        margin: 0 auto
+        display: flex
+        justify-content: space-between
+        align-items: center
+        flex-wrap: wrap
+        gap: 20px
+        padding-top: 40px
+
+    &__header-info
+        flex: 1
+        min-width: 250px
+
+    &__number
+        font-size: 16px
+        opacity: 0.8
+
+    &__name
+        font-size: 48px
+        margin: 10px 0
+        text-transform: capitalize
+
+    &__types
+        display: flex
+        gap: 10px
+        margin-bottom: 10px
+
+    &__type
+        padding: 6px 16px
+        border-radius: 20px
+        font-size: 14px
+        text-transform: capitalize
+        background: rgba(255, 255, 255, 0.3)
+
+    &__genus
+        font-size: 18px
+        opacity: 0.9
+        margin: 10px 0 0
+
+    &__image-container
+        position: relative
+
+    &__favorite
+        position: absolute
+        top: 10px
+        right: 10px
+        background: rgba(255, 255, 255, 0.9)
+        border: none
+        border-radius: 50%
+        width: 48px
+        height: 48px
+        font-size: 24px
+        cursor: pointer
+        z-index: 10
+        color: #ccc
+        transition: all 0.2s ease
+
+        &:hover
+            transform: scale(1.1)
+            color: #f5c518
+
+        &--active
+            color: #f5c518
+
+    &__image
+        width: 280px
+        height: 280px
+        object-fit: contain
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2))
+
+    &__content
+        max-width: 1000px
+        margin: 0 auto
+        padding: 30px 20px
+        display: flex
+        flex-direction: column
+        gap: 24px
+
+    &__description
+        background: #fff
+        padding: 20px
+        border-radius: 12px
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+
+        p
+            margin: 0
+            font-size: 16px
+            line-height: 1.6
+            color: #555
+
+    &__info-grid
+        display: grid
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))
+        gap: 16px
+
+    &__info-card
+        background: #fff
+        padding: 20px
+        border-radius: 12px
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+        text-align: center
+
+        h3
+            margin: 0 0 8px
+            font-size: 14px
+            color: #888
+            font-weight: normal
+
+        p
+            margin: 0
+            font-size: 20px
+            font-weight: bold
+            color: #333
+
+    &__abilities
+        background: #fff
+        padding: 20px
+        border-radius: 12px
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+
+        h3
+            margin: 0 0 16px
+            font-size: 18px
+            color: #333
+
+    &__abilities-list
+        display: flex
+        flex-wrap: wrap
+        gap: 10px
+
+    &__ability
+        padding: 8px 16px
+        background: #f0f0f0
+        border-radius: 20px
+        font-size: 14px
+        text-transform: capitalize
+
+        &--hidden
+            background: #e8e0f0
+            color: #7b62a3
+
+        small
+            font-size: 11px
+            opacity: 0.8
+
+    &__loading,
+    &__error
+        display: flex
+        flex-direction: column
+        align-items: center
+        justify-content: center
+        min-height: 50vh
+        gap: 20px
+
+        p
+            font-size: 18px
+            color: #666
+
+        a
+            color: #dc0a2d
+            text-decoration: none
+
+            &:hover
+                text-decoration: underline
+
+@media (max-width: 768px)
+    .pokemon-details
+        &__name
+            font-size: 32px
+
+        &__image
+            width: 200px
+            height: 200px
+
+        &__header-content
+            justify-content: center
+            text-align: center
+
+        &__header-info
+            display: flex
+            flex-direction: column
+            align-items: center

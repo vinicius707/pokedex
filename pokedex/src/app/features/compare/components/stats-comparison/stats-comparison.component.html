@@ -1,0 +1,55 @@
+<div class="stats-comparison">
+  <h3 class="stats-comparison__title">Stats Comparison</h3>
+  
+  <div class="stats-comparison__header">
+    <span class="stats-comparison__name">{{ name1 }}</span>
+    <span class="stats-comparison__vs">VS</span>
+    <span class="stats-comparison__name">{{ name2 }}</span>
+  </div>
+
+  <div class="stats-comparison__list">
+    <div class="stats-comparison__item" *ngFor="let stat of stats1">
+      <div 
+        class="stats-comparison__bar-left"
+        [class.stats-comparison__bar--winner]="getWinner(stat.name) === 'left'"
+      >
+        <div 
+          class="stats-comparison__bar-fill"
+          [style.width.%]="getStatPercentage(getStat1Value(stat.name))"
+          [style.background-color]="getStatColor(stat.name)"
+        ></div>
+        <span class="stats-comparison__value">{{ getStat1Value(stat.name) }}</span>
+      </div>
+      
+      <span class="stats-comparison__label">{{ stat.name }}</span>
+      
+      <div 
+        class="stats-comparison__bar-right"
+        [class.stats-comparison__bar--winner]="getWinner(stat.name) === 'right'"
+      >
+        <span class="stats-comparison__value">{{ getStat2Value(stat.name) }}</span>
+        <div 
+          class="stats-comparison__bar-fill"
+          [style.width.%]="getStatPercentage(getStat2Value(stat.name))"
+          [style.background-color]="getStatColor(stat.name)"
+        ></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-comparison__total">
+    <div 
+      class="stats-comparison__total-left"
+      [class.stats-comparison__total--winner]="getTotalWinner() === 'left'"
+    >
+      {{ getTotalStats1() }}
+    </div>
+    <span class="stats-comparison__total-label">Total</span>
+    <div 
+      class="stats-comparison__total-right"
+      [class.stats-comparison__total--winner]="getTotalWinner() === 'right'"
+    >
+      {{ getTotalStats2() }}
+    </div>
+  </div>
+</div>

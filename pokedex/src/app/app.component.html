@@ -1,1 +1,17 @@
-<app-pokemon-list></app-pokemon-list>
+<header class="app-header">
+  <nav class="app-nav">
+    <a routerLink="/" class="app-nav__logo">
+      <span class="app-nav__logo-icon">🔴</span>
+      <span class="app-nav__logo-text">Pokédex</span>
+    </a>
+    <div class="app-nav__links">
+      <a routerLink="/" class="app-nav__link">Home</a>
+      <a routerLink="/favorites" class="app-nav__link">Favoritos</a>
+      <a routerLink="/compare" class="app-nav__link">Comparar</a>
+    </div>
+  </nav>
+</header>
+
+<main class="app-main">
+  <router-outlet></router-outlet>
+</main>

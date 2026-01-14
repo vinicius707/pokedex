@@ -1,0 +1,37 @@
+<div class="search-filter">
+  <div class="search-filter__search">
+    <input
+      type="text"
+      [(ngModel)]="searchValue"
+      (ngModelChange)="onSearchChange()"
+      placeholder="Buscar por nome ou número..."
+      class="search-filter__input"
+    />
+    <button 
+      class="search-filter__clear-btn"
+      *ngIf="hasActiveFilters()"
+      (click)="clearFilters()"
+    >
+      Limpar filtros
+    </button>
+  </div>
+
+  <div class="search-filter__types">
+    <button
+      class="search-filter__type-btn"
+      [class.search-filter__type-btn--active]="pokemonService.selectedType() === null"
+      (click)="onTypeSelect(null)"
+    >
+      Todos
+    </button>
+    <button
+      *ngFor="let type of allTypes"
+      class="search-filter__type-btn"
+      [class.search-filter__type-btn--active]="isTypeSelected(type)"
+      [style.--type-color]="getTypeColor(type)"
+      (click)="onTypeSelect(type)"
+    >
+      {{ type }}
+    </button>
+  </div>
+</div>

@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
-import { PokemonListComponent } from './features/pokedex/components/pokemon-list/pokemon-list.component';
+import { RouterOutlet, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.sass'],
   standalone: true,
-  imports: [PokemonListComponent]
+  imports: [RouterOutlet, RouterLink, CommonModule],
 })
 export class AppComponent {
   title = 'pokedex';

@@ -1,0 +1,92 @@
+<div class="pokemon-details" *ngIf="!loading() && pokemon() as p">
+  <div class="pokemon-details__header" [style.background]="getTypeColor(p.types[0])">
+    <a routerLink="/" class="pokemon-details__back">← Voltar</a>
+    
+    <div class="pokemon-details__header-content">
+      <div class="pokemon-details__header-info">
+        <span class="pokemon-details__number">N° {{ getPokemonNumber(p) }}</span>
+        <h1 class="pokemon-details__name">{{ capitalize(p.name) }}</h1>
+        <div class="pokemon-details__types">
+          <span 
+            class="pokemon-details__type" 
+            *ngFor="let type of p.types"
+            [style.background-color]="getTypeColor(type)"
+          >
+            {{ type }}
+          </span>
+        </div>
+        <p class="pokemon-details__genus" *ngIf="speciesInfo()?.genus">
+          {{ speciesInfo()?.genus }}
+        </p>
+      </div>
+      
+      <div class="pokemon-details__image-container">
+        <button 
+          class="pokemon-details__favorite"
+          [class.pokemon-details__favorite--active]="isFavorite()"
+          (click)="toggleFavorite()"
+          [attr.aria-label]="isFavorite() ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
+        >
+          {{ isFavorite() ? '★' : '☆' }}
+        </button>
+        <img 
+          [src]="p.image" 
+          [alt]="p.name"
+          class="pokemon-details__image"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="pokemon-details__content">
+    <div class="pokemon-details__description" *ngIf="speciesInfo()?.flavorText">
+      <p>{{ speciesInfo()?.flavorText }}</p>
+    </div>
+
+    <div class="pokemon-details__info-grid">
+      <div class="pokemon-details__info-card">
+        <h3>Height</h3>
+        <p>{{ formatHeight(p.height) }}</p>
+      </div>
+      <div class="pokemon-details__info-card">
+        <h3>Weight</h3>
+        <p>{{ formatWeight(p.weight) }}</p>
+      </div>
+      <div class="pokemon-details__info-card" *ngIf="speciesInfo()?.generation">
+        <h3>Generation</h3>
+        <p>{{ getGenerationLabel(speciesInfo()!.generation) }}</p>
+      </div>
+    </div>
+
+    <div class="pokemon-details__abilities">
+      <h3>Abilities</h3>
+      <div class="pokemon-details__abilities-list">
+        <span 
+          class="pokemon-details__ability"
+          *ngFor="let ability of p.abilities"
+          [class.pokemon-details__ability--hidden]="ability.isHidden"
+        >
+          {{ capitalize(ability.name) }}
+          <small *ngIf="ability.isHidden">(Hidden)</small>
+        </span>
+      </div>
+    </div>
+
+    <app-stats-chart [stats]="p.stats"></app-stats-chart>
+
+    <app-evolution-chain 
+      *ngIf="evolutionChain()?.chain"
+      [chain]="evolutionChain()!.chain"
+      [currentPokemonId]="p.id"
+    ></app-evolution-chain>
+  </div>
+</div>
+
+<div class="pokemon-details__loading" *ngIf="loading()">
+  <p>Carregando...</p>
+</div>
+
+<div class="pokemon-details__error" *ngIf="error()">
+  <p>{{ error() }}</p>
+  <a routerLink="/">Voltar para a lista</a>
+</div>
