@@ -100,7 +100,21 @@ export class PokemonService {
           this.pokemonsCache.set(result.id, pokemon);
         },
         complete: () => {
-          this.currentPage.set(page);
+          // Garantir que todos os pokemons da pagina estao no cache antes de atualizar
+          const startId = (page - 1) * this.pageSize + 1;
+          const endId = Math.min(startId + this.pageSize - 1, this.totalPokemons());
+          let allLoaded = true;
+          
+          for (let id = startId; id <= endId; id++) {
+            if (!this.pokemonsCache.has(id)) {
+              allLoaded = false;
+              break;
+            }
+          }
+          
+          if (allLoaded) {
+            this.currentPage.set(page);
+          }
           this.loading.set(false);
         },
         error: () => {

@@ -10,32 +10,67 @@
     ></app-pokemon-card>
   </div>
 
-  <div class="pagination" *ngIf="pokemonService.totalPages() > 0">
-    <button
-      class="pagination-button"
-      [disabled]="pokemonService.currentPage() === 1"
-      (click)="previousPage()"
-    >
-      Anterior
-    </button>
+  <div class="pagination-container" *ngIf="pokemonService.totalPages() > 0">
+    <nav class="pagination" aria-label="Paginação de pokemons">
+      <div class="pagination-controls">
+        <button
+          *ngIf="getPaginationInfo().showFirst"
+          class="pagination-button pagination-button--first"
+          (click)="goToFirstPage()"
+          aria-label="Ir para primeira página"
+          type="button"
+        >
+          Primeira
+        </button>
 
-    <div class="pagination-numbers">
-      <button
-        *ngFor="let page of getPageNumbers()"
-        class="pagination-number"
-        [class.active]="page === pokemonService.currentPage()"
-        (click)="goToPage(page)"
-      >
-        {{ page }}
-      </button>
-    </div>
+        <button
+          *ngIf="getPaginationInfo().showPrevious"
+          class="pagination-button pagination-button--prev"
+          (click)="previousPage()"
+          aria-label="Ir para página anterior"
+          type="button"
+        >
+          <span aria-hidden="true">«</span> Anterior
+        </button>
 
-    <button
-      class="pagination-button"
-      [disabled]="pokemonService.currentPage() === pokemonService.totalPages()"
-      (click)="nextPage()"
-    >
-      Próximo
-    </button>
+        <div class="pagination-numbers" role="list">
+          <button
+            *ngFor="let item of getPaginationInfo().items; trackBy: trackByPageItem"
+            class="pagination-number"
+            [class.pagination-number--ellipsis]="isEllipsis(item)"
+            [class.pagination-number--active]="isCurrentPage(item)"
+            [attr.aria-label]="getPageNumber(item) ? 'Ir para página ' + getPageNumber(item) : null"
+            [attr.aria-current]="isCurrentPage(item) ? 'page' : null"
+            [disabled]="isEllipsis(item)"
+            (click)="onPageClick(item)"
+            type="button"
+            role="listitem"
+          >
+            <span *ngIf="isEllipsis(item)" aria-hidden="true">...</span>
+            <span *ngIf="!isEllipsis(item)">{{ item }}</span>
+          </button>
+        </div>
+
+        <button
+          *ngIf="getPaginationInfo().showNext"
+          class="pagination-button pagination-button--next"
+          (click)="nextPage()"
+          aria-label="Ir para próxima página"
+          type="button"
+        >
+          Próxima <span aria-hidden="true">»</span>
+        </button>
+
+        <button
+          *ngIf="getPaginationInfo().showLast"
+          class="pagination-button pagination-button--last"
+          (click)="goToLastPage()"
+          aria-label="Ir para última página"
+          type="button"
+        >
+          Última
+        </button>
+      </div>
+    </nav>
   </div>
 </div>
