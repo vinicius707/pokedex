@@ -27,17 +27,20 @@ Este projeto consome a [PokeAPI](https://pokeapi.co/) para exibir informações 
 ## Funcionalidades
 
 ### 🏠 Lista de Pokémon
+
 - Lista completa de todos os 1350+ Pokémon
 - Paginação inteligente com 10 Pokémon por página
 - Cache de dados para navegação instantânea
 - Cards interativos com hover effects
 
 ### 🔍 Busca e Filtros
+
 - Busca por nome ou número com debounce
 - Filtro por tipo (18 tipos disponíveis)
 - Limpeza rápida de filtros
 
 ### 📋 Detalhes do Pokémon
+
 - Imagem em alta qualidade (Official Artwork)
 - Base stats com barras visuais coloridas
 - Habilidades (incluindo Hidden Abilities)
@@ -46,12 +49,14 @@ Este projeto consome a [PokeAPI](https://pokeapi.co/) para exibir informações 
 - Cadeia de evolução interativa
 
 ### ⭐ Sistema de Favoritos
+
 - Adicionar/remover favoritos com um clique
 - Persistência em localStorage
 - Página dedicada de favoritos
 - Contador de favoritos
 
 ### ⚔️ Comparador de Pokémon
+
 - Comparação lado a lado de dois Pokémon
 - Barras comparativas de stats
 - Indicadores de "vencedor" por atributo
@@ -59,13 +64,13 @@ Este projeto consome a [PokeAPI](https://pokeapi.co/) para exibir informações 
 
 ## Tecnologias
 
-| Categoria | Tecnologia | Versão |
-|-----------|------------|--------|
-| Framework | Angular | 21 |
-| Linguagem | TypeScript | 5.9 |
-| Reatividade | RxJS | 7.8 |
-| Estilização | Sass | - |
-| API | PokeAPI | v2 |
+| Categoria   | Tecnologia | Versão |
+| ----------- | ---------- | ------ |
+| Framework   | Angular    | 21     |
+| Linguagem   | TypeScript | 5.9    |
+| Reatividade | RxJS       | 7.8    |
+| Estilização | Sass       | -      |
+| API         | PokeAPI    | v2     |
 
 ### Padrões Modernos do Angular
 
@@ -98,12 +103,12 @@ Acesse `http://localhost:4200` no navegador.
 
 ## Scripts Disponíveis
 
-| Comando | Descrição |
-|---------|-----------|
-| `npm start` | Servidor de desenvolvimento (porta 4200) |
-| `npm run build` | Build de produção em `dist/` |
-| `npm run test` | Testes unitários com Karma |
-| `npm run watch` | Build em modo watch |
+| Comando         | Descrição                                |
+| --------------- | ---------------------------------------- |
+| `npm start`     | Servidor de desenvolvimento (porta 4200) |
+| `npm run build` | Build de produção em `dist/`             |
+| `npm run test`  | Testes unitários com Karma               |
+| `npm run watch` | Build em modo watch                      |
 
 ## Estrutura do Projeto
 
@@ -152,12 +157,12 @@ src/app/
 
 ### Rotas
 
-| Rota | Componente | Descrição |
-|------|------------|-----------|
-| `/` | PokemonListComponent | Lista paginada |
+| Rota           | Componente              | Descrição           |
+| -------------- | ----------------------- | ------------------- |
+| `/`            | PokemonListComponent    | Lista paginada      |
 | `/pokemon/:id` | PokemonDetailsComponent | Detalhes do Pokémon |
-| `/favorites` | FavoritesViewComponent | Lista de favoritos |
-| `/compare` | CompareViewComponent | Comparador |
+| `/favorites`   | FavoritesViewComponent  | Lista de favoritos  |
+| `/compare`     | CompareViewComponent    | Comparador          |
 
 ### Fluxo de Dados
 
@@ -208,23 +213,23 @@ filteredPokemons = computed(() => /* aplica filtros */);
 
 ## Otimizações de Performance
 
-| Técnica | Benefício |
-|---------|-----------|
-| Paginação | Apenas 10 Pokémon por requisição |
-| Cache em Map | Evita requisições duplicadas |
-| Computed Signals | Recálculo apenas quando necessário |
-| Lazy Loading | Componentes carregados sob demanda |
-| Debounce na busca | Evita requisições excessivas |
+| Técnica            | Benefício                              |
+| ------------------ | -------------------------------------- |
+| Paginação          | Apenas 10 Pokémon por requisição       |
+| Cache em Map       | Evita requisições duplicadas           |
+| Computed Signals   | Recálculo apenas quando necessário     |
+| Lazy Loading       | Componentes carregados sob demanda     |
+| Debounce na busca  | Evita requisições excessivas           |
 | Image lazy loading | Carrega imagens apenas quando visíveis |
 
 ## API Endpoints Utilizados
 
-| Endpoint | Uso |
-|----------|-----|
-| `/pokemon?limit&offset` | Lista paginada |
-| `/pokemon/{id}` | Detalhes do Pokémon |
+| Endpoint                | Uso                    |
+| ----------------------- | ---------------------- |
+| `/pokemon?limit&offset` | Lista paginada         |
+| `/pokemon/{id}`         | Detalhes do Pokémon    |
 | `/pokemon-species/{id}` | Informações de espécie |
-| `/evolution-chain/{id}` | Cadeia de evolução |
+| `/evolution-chain/{id}` | Cadeia de evolução     |
 
 ## Créditos
 
