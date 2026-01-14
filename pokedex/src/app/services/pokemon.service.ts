@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { from } from 'rxjs';
 import { Pokemon } from 'src/model/pokemon';
 import { map, mergeMap } from 'rxjs/operators';
@@ -8,7 +8,10 @@ import { map, mergeMap } from 'rxjs/operators';
   providedIn: 'root',
 })
 export class PokemonService {
-  public pokemons: Pokemon[] = [];
+  public readonly pokemons = signal<Pokemon[]>([]);
+  public readonly pokemonList = computed(() =>
+    this.pokemons().filter((pokemon): pokemon is Pokemon => !!pokemon)
+  );
 
   constructor(private httpClient: HttpClient) {
     const pokemonsUrl = 'https://pokeapi.co/api/v2/pokemon/?limit=40';
@@ -24,14 +27,17 @@ export class PokemonService {
         }),
         mergeMap((value) => value)
       )
-      .subscribe(
-        (result: any) =>
-          (this.pokemons[result.id] = {
+      .subscribe((result: any) =>
+        this.pokemons.update((current) => {
+          const next = [...current];
+          next[result.id] = {
             image: result.sprites.front_default,
             number: result.id,
             name: result.name,
             types: result.types.map((t: any) => t.type.name),
-          })
+          };
+          return next;
+        })
       );
   }
 }
