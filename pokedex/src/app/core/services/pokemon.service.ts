@@ -21,17 +21,21 @@ export class PokemonService {
 
   public readonly paginatedPokemons = computed(() => {
     const page = this.currentPage();
-    const startId = (page - 1) * this.pageSize + 1;
-    const endId = Math.min(startId + this.pageSize - 1, this.totalPokemons());
+    const startPosition = (page - 1) * this.pageSize + 1;
+    const endPosition = Math.min(
+      startPosition + this.pageSize - 1,
+      this.totalPokemons()
+    );
     const pokemons: Pokemon[] = [];
-    
-    for (let id = startId; id <= endId; id++) {
-      const pokemon = this.pokemonsCache.get(id);
+
+    // Cache usa posição (1-indexed) como chave, não o ID real do pokemon
+    for (let pos = startPosition; pos <= endPosition; pos++) {
+      const pokemon = this.pokemonsCache.get(pos);
       if (pokemon) {
         pokemons.push(pokemon);
       }
     }
-    
+
     return pokemons;
   });
 
@@ -61,36 +65,49 @@ export class PokemonService {
       return;
     }
 
-    const startIndex = (page - 1) * this.pageSize + 1;
-    const endIndex = Math.min(startIndex + this.pageSize - 1, this.totalPokemons());
-    
-    // Verificar quais pokemons precisam ser carregados
-    const pokemonsToLoad: number[] = [];
-    for (let i = startIndex; i <= endIndex; i++) {
-      if (!this.pokemonsCache.has(i)) {
-        pokemonsToLoad.push(i);
+    // Usar posição (1-indexed) em vez de ID real do pokemon
+    const startPosition = (page - 1) * this.pageSize + 1;
+    const endPosition = Math.min(
+      startPosition + this.pageSize - 1,
+      this.totalPokemons()
+    );
+
+    // Verificar quais posições precisam ser carregadas
+    const positionsToLoad: number[] = [];
+    for (let pos = startPosition; pos <= endPosition; pos++) {
+      if (!this.pokemonsCache.has(pos)) {
+        positionsToLoad.push(pos);
       }
     }
 
     // Se todos já estão no cache, apenas atualizar a página
-    if (pokemonsToLoad.length === 0) {
+    if (positionsToLoad.length === 0) {
       this.currentPage.set(page);
       return;
     }
 
     this.loading.set(true);
-    const pokemonsUrl = `https://pokeapi.co/api/v2/pokemon/?offset=${startIndex - 1}&limit=${this.pageSize}`;
+    const pokemonsUrl = `https://pokeapi.co/api/v2/pokemon/?offset=${
+      startPosition - 1
+    }&limit=${this.pageSize}`;
 
     this.httpClient
       .get<any>(pokemonsUrl)
       .pipe(
         map((value) => value.results),
-        map((value: any) => {
-          return from(value).pipe(
-            mergeMap((v: any) => this.httpClient.get(v.url))
-          );
+        map((results: any[]) => {
+          // Mapear resultados com suas posições
+          return results.map((result, index) => ({
+            url: result.url,
+            position: startPosition + index,
+          }));
         }),
-        mergeMap((value) => value)
+        mergeMap((items) => from(items)),
+        mergeMap((item: any) =>
+          this.httpClient
+            .get(item.url)
+            .pipe(map((data: any) => ({ ...data, position: item.position })))
+        )
       )
       .subscribe({
         next: (result: any) => {
@@ -100,19 +117,25 @@ export class PokemonService {
             name: result.name,
             types: result.types.map((t: any) => t.type.name),
           };
-          this.pokemonsCache.set(result.id, pokemon);
+          // Usar posição em vez de ID real
+          this.pokemonsCache.set(result.position, pokemon);
         },
         complete: () => {
           // Verificar se todos os pokemons da página foram carregados
-          // (importante porque podem chegar fora de ordem)
-          const startId = (page - 1) * this.pageSize + 1;
-          const endId = Math.min(startId + this.pageSize - 1, this.totalPokemons());
-          
-          // Verificar apenas os IDs que precisavam ser carregados
-          const allLoaded = pokemonsToLoad.every(id => 
-            id >= startId && id <= endId && this.pokemonsCache.has(id)
+          const startPos = (page - 1) * this.pageSize + 1;
+          const endPos = Math.min(
+            startPos + this.pageSize - 1,
+            this.totalPokemons()
           );
-          
+          let allLoaded = true;
+
+          for (let pos = startPos; pos <= endPos; pos++) {
+            if (!this.pokemonsCache.has(pos)) {
+              allLoaded = false;
+              break;
+            }
+          }
+
           if (allLoaded) {
             this.currentPage.set(page);
           }
@@ -123,7 +146,6 @@ export class PokemonService {
         },
       });
   }
-
 
   public goToPage(page: number): void {
     this.loadPage(page);
