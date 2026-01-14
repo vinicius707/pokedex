@@ -63,12 +63,15 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "buildTarget": "pokedex:build:development"
+          },
           "configurations": {
             "production": {
-              "browserTarget": "pokedex:build:production"
+              "buildTarget": "pokedex:build:production"
             },
             "development": {
-              "browserTarget": "pokedex:build:development"
+              "buildTarget": "pokedex:build:development"
             }
           },
           "defaultConfiguration": "development"
