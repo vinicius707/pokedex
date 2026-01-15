@@ -23,7 +23,7 @@
     <p>Nenhum Pokémon encontrado com os filtros selecionados.</p>
   </div>
 
-  <div class="pagination-container" *ngIf="pokemonService.totalPages() > 0 && !pokemonService.searchTerm() && !pokemonService.selectedType()">
+  <div class="pagination-container" *ngIf="pokemonService.totalPages() > 0 && !pokemonService.searchTerm()">
     <nav class="pagination" aria-label="Paginação de pokémons">
       <ng-container *ngIf="paginationInfo() as info">
         <div class="pagination-controls">

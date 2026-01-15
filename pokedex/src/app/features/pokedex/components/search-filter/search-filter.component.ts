@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
@@ -18,6 +18,23 @@ export class SearchFilterComponent implements OnInit, OnDestroy {
   
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
+
+  // Computed para mostrar informações do filtro
+  public readonly filterInfo = computed(() => {
+    const isTypeFilterActive = this.pokemonService.typeFilterMode();
+    const selectedType = this.pokemonService.selectedType();
+    const totalResults = isTypeFilterActive
+      ? this.pokemonService.typeFilterTotal()
+      : this.pokemonService.totalPokemons();
+    const isLoading = this.pokemonService.loading();
+
+    return {
+      isTypeFilterActive,
+      selectedType,
+      totalResults,
+      isLoading,
+    };
+  });
 
   constructor(public pokemonService: PokemonService) {}
 
@@ -48,6 +65,13 @@ export class SearchFilterComponent implements OnInit, OnDestroy {
 
   isTypeSelected(type: Type): boolean {
     return this.pokemonService.selectedType() === type;
+  }
+
+  isTypeLoading(type: Type): boolean {
+    return (
+      this.pokemonService.loading() &&
+      this.pokemonService.selectedType() === type
+    );
   }
 
   getTypeColor(type: Type): string {

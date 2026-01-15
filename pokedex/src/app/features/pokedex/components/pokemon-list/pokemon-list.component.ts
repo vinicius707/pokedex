@@ -35,7 +35,10 @@ export class PokemonListComponent {
 
   public readonly paginationInfo = computed<PaginationInfo>(() => {
     const total = this.pokemonService.totalPages();
-    const current = this.pokemonService.currentPage();
+    // Usa a página efetiva (considera modo filtro por tipo)
+    const current = this.pokemonService.typeFilterMode()
+      ? this.pokemonService.typeFilterPage()
+      : this.pokemonService.currentPage();
     const items: PageItem[] = [];
 
     if (total <= 0) {

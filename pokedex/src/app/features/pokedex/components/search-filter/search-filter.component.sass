@@ -5,10 +5,13 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
     margin-bottom: 24px
 
+    &__header
+        margin-bottom: 16px
+
     &__search
         display: flex
         gap: 12px
-        margin-bottom: 16px
+        margin-bottom: 12px
 
     &__input
         flex: 1
@@ -40,12 +43,40 @@
             background: #dc0a2d
             color: #fff
 
+    &__results
+        display: flex
+        align-items: center
+        padding: 10px 14px
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)
+        border-radius: 8px
+        border-left: 4px solid #dc0a2d
+
+    &__results-count
+        font-size: 14px
+        color: #495057
+
+        strong
+            color: #dc0a2d
+            font-size: 16px
+
+    &__results-type
+        display: inline-block
+        padding: 2px 10px
+        border-radius: 12px
+        color: #fff
+        font-weight: 600
+        text-transform: capitalize
+        margin-left: 4px
+
     &__types
         display: flex
         flex-wrap: wrap
         gap: 8px
 
     &__type-btn
+        display: inline-flex
+        align-items: center
+        gap: 6px
         padding: 6px 14px
         border: 2px solid #e0e0e0
         background: #fff
@@ -54,15 +85,40 @@
         cursor: pointer
         transition: all 0.2s ease
         text-transform: capitalize
+        position: relative
 
-        &:hover
+        &:hover:not(:disabled)
             border-color: var(--type-color, #dc0a2d)
             color: var(--type-color, #dc0a2d)
+
+        &:disabled
+            cursor: not-allowed
+            opacity: 0.8
 
         &--active
             background: var(--type-color, #dc0a2d)
             border-color: var(--type-color, #dc0a2d)
             color: #fff
 
-            &:hover
+            &:hover:not(:disabled)
                 color: #fff
+
+        &--loading
+            padding-right: 30px
+
+    &__type-text
+        display: inline-block
+
+    &__type-loader
+        position: absolute
+        right: 10px
+        width: 14px
+        height: 14px
+        border: 2px solid rgba(255, 255, 255, 0.3)
+        border-top-color: #fff
+        border-radius: 50%
+        animation: spin 0.8s linear infinite
+
+@keyframes spin
+    to
+        transform: rotate(360deg)

@@ -10,6 +10,11 @@ import {
 import { Type } from 'src/app/shared/models/type';
 import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
 
+interface TypeFilterData {
+  pokemonIds: number[];
+  totalCount: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -17,6 +22,8 @@ export class PokemonService {
   private readonly API_URL = 'https://pokeapi.co/api/v2';
   private readonly listCache = new Map<number, PokemonListItem>();
   private readonly detailsCache = new Map<number, Pokemon>();
+  private readonly typeFilterCache = new Map<Type, TypeFilterData>();
+  private readonly typeFilterPokemonCache = new Map<string, PokemonListItem>();
   private readonly pageSize = 10;
 
   public readonly currentPage = signal(1);
@@ -27,8 +34,20 @@ export class PokemonService {
   public readonly searchTerm = signal('');
   public readonly selectedType = signal<Type | null>(null);
 
-  public readonly totalPages = computed(() =>
-    Math.ceil(this.totalPokemons() / this.pageSize)
+  // Modo filtro por tipo (quando ativo, usa API /type/{type})
+  public readonly typeFilterMode = signal(false);
+  public readonly typeFilterPage = signal(1);
+  public readonly typeFilterTotal = signal(0);
+
+  public readonly totalPages = computed(() => {
+    if (this.typeFilterMode()) {
+      return Math.ceil(this.typeFilterTotal() / this.pageSize);
+    }
+    return Math.ceil(this.totalPokemons() / this.pageSize);
+  });
+
+  public readonly typeFilterTotalPages = computed(() =>
+    Math.ceil(this.typeFilterTotal() / this.pageSize)
   );
 
   public readonly paginatedPokemons = computed(() => {
@@ -50,10 +69,55 @@ export class PokemonService {
     return pokemons;
   });
 
+  // Pokemons paginados do filtro por tipo
+  public readonly typeFilterPaginatedPokemons = computed(() => {
+    const type = this.selectedType();
+    if (!type || !this.typeFilterMode()) {
+      return [];
+    }
+
+    const page = this.typeFilterPage();
+    const typeData = this.typeFilterCache.get(type);
+    if (!typeData) {
+      return [];
+    }
+
+    const startIndex = (page - 1) * this.pageSize;
+    const endIndex = Math.min(startIndex + this.pageSize, typeData.totalCount);
+    const pokemons: PokemonListItem[] = [];
+
+    for (let i = startIndex; i < endIndex; i++) {
+      const pokemonId = typeData.pokemonIds[i];
+      const cacheKey = `${type}-${pokemonId}`;
+      const pokemon = this.typeFilterPokemonCache.get(cacheKey);
+      if (pokemon) {
+        pokemons.push(pokemon);
+      }
+    }
+
+    return pokemons;
+  });
+
   public readonly filteredPokemons = computed(() => {
+    // Se estiver no modo filtro por tipo, usa os resultados do filtro
+    if (this.typeFilterMode()) {
+      let result = this.typeFilterPaginatedPokemons();
+      const search = this.searchTerm().toLowerCase().trim();
+
+      if (search) {
+        result = result.filter(
+          (p) =>
+            p.name.toLowerCase().includes(search) ||
+            p.id.toString().includes(search)
+        );
+      }
+
+      return result;
+    }
+
+    // Modo normal
     let result = this.paginatedPokemons();
     const search = this.searchTerm().toLowerCase().trim();
-    const type = this.selectedType();
 
     if (search) {
       result = result.filter(
@@ -63,11 +127,15 @@ export class PokemonService {
       );
     }
 
-    if (type) {
-      result = result.filter((p) => p.types.includes(type));
-    }
-
     return result;
+  });
+
+  // Computed para página atual (considera ambos os modos)
+  public readonly effectiveCurrentPage = computed(() => {
+    if (this.typeFilterMode()) {
+      return this.typeFilterPage();
+    }
+    return this.currentPage();
   });
 
   constructor(private httpClient: HttpClient) {
@@ -263,27 +331,174 @@ export class PokemonService {
   }
 
   public setSelectedType(type: Type | null): void {
+    if (type === null) {
+      // Desativa o modo filtro por tipo
+      this.typeFilterMode.set(false);
+      this.selectedType.set(null);
+      return;
+    }
+
     this.selectedType.set(type);
+    this.loadPokemonsByType(type);
+  }
+
+  public loadPokemonsByType(type: Type): void {
+    this.loading.set(true);
+    this.typeFilterMode.set(true);
+    this.typeFilterPage.set(1);
+
+    // Verifica se já tem no cache
+    if (this.typeFilterCache.has(type)) {
+      const typeData = this.typeFilterCache.get(type)!;
+      this.typeFilterTotal.set(typeData.totalCount);
+      this.loadTypeFilterPage(1);
+      return;
+    }
+
+    // Busca na API
+    this.httpClient
+      .get<any>(`${this.API_URL}/type/${type}`)
+      .pipe(
+        map((result) => {
+          const pokemonIds: number[] = result.pokemon
+            .map((p: any) => {
+              const url = p.pokemon.url;
+              const idMatch = url.match(/\/pokemon\/(\d+)\//);
+              return idMatch ? parseInt(idMatch[1], 10) : null;
+            })
+            .filter((id: number | null) => id !== null)
+            .sort((a: number, b: number) => a - b);
+
+          return {
+            pokemonIds,
+            totalCount: pokemonIds.length,
+          };
+        })
+      )
+      .subscribe({
+        next: (typeData) => {
+          this.typeFilterCache.set(type, typeData);
+          this.typeFilterTotal.set(typeData.totalCount);
+          this.loadTypeFilterPage(1);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.typeFilterMode.set(false);
+        },
+      });
+  }
+
+  public loadTypeFilterPage(page: number): void {
+    const type = this.selectedType();
+    if (!type || !this.typeFilterMode()) {
+      return;
+    }
+
+    const typeData = this.typeFilterCache.get(type);
+    if (!typeData) {
+      return;
+    }
+
+    const totalPages = Math.ceil(typeData.totalCount / this.pageSize);
+    if (page < 1 || page > totalPages) {
+      return;
+    }
+
+    const startIndex = (page - 1) * this.pageSize;
+    const endIndex = Math.min(startIndex + this.pageSize, typeData.totalCount);
+
+    // Verifica quais pokemons precisam ser carregados
+    const pokemonsToLoad: number[] = [];
+    for (let i = startIndex; i < endIndex; i++) {
+      const pokemonId = typeData.pokemonIds[i];
+      const cacheKey = `${type}-${pokemonId}`;
+      if (!this.typeFilterPokemonCache.has(cacheKey)) {
+        pokemonsToLoad.push(pokemonId);
+      }
+    }
+
+    if (pokemonsToLoad.length === 0) {
+      this.typeFilterPage.set(page);
+      this.loading.set(false);
+      return;
+    }
+
+    this.loading.set(true);
+
+    // Carrega os detalhes dos pokemons
+    from(pokemonsToLoad)
+      .pipe(
+        mergeMap((pokemonId) =>
+          this.httpClient
+            .get<any>(`${this.API_URL}/pokemon/${pokemonId}`)
+            .pipe(map((data) => ({ data, type })))
+        ),
+        toArray()
+      )
+      .subscribe({
+        next: (results) => {
+          results.forEach(({ data, type: t }) => {
+            const pokemon: PokemonListItem = {
+              id: data.id,
+              name: data.name,
+              image:
+                data.sprites.other?.['official-artwork']?.front_default ||
+                data.sprites.front_default,
+              types: data.types.map((tp: any) => tp.type.name as Type),
+            };
+            const cacheKey = `${t}-${data.id}`;
+            this.typeFilterPokemonCache.set(cacheKey, pokemon);
+          });
+        },
+        complete: () => {
+          this.typeFilterPage.set(page);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+        },
+      });
   }
 
   public clearFilters(): void {
     this.searchTerm.set('');
     this.selectedType.set(null);
+    this.typeFilterMode.set(false);
+    this.typeFilterPage.set(1);
+    this.typeFilterTotal.set(0);
   }
 
   public goToPage(page: number): void {
-    this.loadPage(page);
+    if (this.typeFilterMode()) {
+      this.loadTypeFilterPage(page);
+    } else {
+      this.loadPage(page);
+    }
   }
 
   public nextPage(): void {
-    if (this.currentPage() < this.totalPages()) {
-      this.loadPage(this.currentPage() + 1);
+    if (this.typeFilterMode()) {
+      const currentPage = this.typeFilterPage();
+      if (currentPage < this.totalPages()) {
+        this.loadTypeFilterPage(currentPage + 1);
+      }
+    } else {
+      if (this.currentPage() < this.totalPages()) {
+        this.loadPage(this.currentPage() + 1);
+      }
     }
   }
 
   public previousPage(): void {
-    if (this.currentPage() > 1) {
-      this.loadPage(this.currentPage() - 1);
+    if (this.typeFilterMode()) {
+      const currentPage = this.typeFilterPage();
+      if (currentPage > 1) {
+        this.loadTypeFilterPage(currentPage - 1);
+      }
+    } else {
+      if (this.currentPage() > 1) {
+        this.loadPage(this.currentPage() - 1);
+      }
     }
   }
 

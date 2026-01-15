@@ -1,19 +1,33 @@
 <div class="search-filter">
-  <div class="search-filter__search">
-    <input
-      type="text"
-      [(ngModel)]="searchValue"
-      (ngModelChange)="onSearchChange()"
-      placeholder="Buscar por nome ou número..."
-      class="search-filter__input"
-    />
-    <button 
-      class="search-filter__clear-btn"
-      *ngIf="hasActiveFilters()"
-      (click)="clearFilters()"
-    >
-      Limpar filtros
-    </button>
+  <div class="search-filter__header">
+    <div class="search-filter__search">
+      <input
+        type="text"
+        [(ngModel)]="searchValue"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Buscar por nome ou número..."
+        class="search-filter__input"
+      />
+      <button 
+        class="search-filter__clear-btn"
+        *ngIf="hasActiveFilters()"
+        (click)="clearFilters()"
+      >
+        Limpar filtros
+      </button>
+    </div>
+    
+    <div class="search-filter__results" *ngIf="filterInfo().isTypeFilterActive">
+      <span class="search-filter__results-count">
+        <strong>{{ filterInfo().totalResults }}</strong> Pokémon do tipo 
+        <span 
+          class="search-filter__results-type"
+          [style.background-color]="getTypeColor(filterInfo().selectedType!)"
+        >
+          {{ filterInfo().selectedType }}
+        </span>
+      </span>
+    </div>
   </div>
 
   <div class="search-filter__types">
@@ -28,10 +42,13 @@
       *ngFor="let type of allTypes"
       class="search-filter__type-btn"
       [class.search-filter__type-btn--active]="isTypeSelected(type)"
+      [class.search-filter__type-btn--loading]="isTypeLoading(type)"
       [style.--type-color]="getTypeColor(type)"
       (click)="onTypeSelect(type)"
+      [disabled]="isTypeLoading(type)"
     >
-      {{ type }}
+      <span class="search-filter__type-text">{{ type }}</span>
+      <span class="search-filter__type-loader" *ngIf="isTypeLoading(type)"></span>
     </button>
   </div>
 </div>
