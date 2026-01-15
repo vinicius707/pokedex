@@ -78,6 +78,37 @@ describe('FavoritesService', () => {
 
       consoleSpy.mockRestore();
     });
+
+    it('should filter out invalid IDs from localStorage', () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      localStorageMock.getItem.mockReturnValue('[1, -5, 2, 0, 3, "invalid", null]');
+
+      const newService = new FavoritesService();
+
+      expect(newService.favorites()).toEqual([1, 2, 3]);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should remove duplicates from localStorage', () => {
+      localStorageMock.getItem.mockReturnValue('[1, 2, 1, 3, 2]');
+
+      const newService = new FavoritesService();
+
+      expect(newService.favorites()).toEqual([1, 2, 3]);
+    });
+
+    it('should return empty array when localStorage has non-array data', () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      localStorageMock.getItem.mockReturnValue('{"not": "array"}');
+
+      const newService = new FavoritesService();
+
+      expect(newService.favorites()).toEqual([]);
+      expect(consoleSpy).toHaveBeenCalledWith('Invalid favorites data format, resetting');
+
+      consoleSpy.mockRestore();
+    });
   });
 
   describe('toggle', () => {
@@ -94,6 +125,37 @@ describe('FavoritesService', () => {
       service.toggle(1);
       expect(service.favorites()).not.toContain(1);
     });
+
+    it('should not add invalid pokemon id (negative)', () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      service.toggle(-1);
+
+      expect(service.favorites()).not.toContain(-1);
+      expect(consoleSpy).toHaveBeenCalledWith('Invalid Pokemon ID:', -1);
+      
+      consoleSpy.mockRestore();
+    });
+
+    it('should not add invalid pokemon id (zero)', () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      service.toggle(0);
+
+      expect(service.favorites()).not.toContain(0);
+      
+      consoleSpy.mockRestore();
+    });
+
+    it('should not add invalid pokemon id (too large)', () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      service.toggle(999999);
+
+      expect(service.favorites()).not.toContain(999999);
+      
+      consoleSpy.mockRestore();
+    });
   });
 
   describe('add', () => {
@@ -108,6 +170,17 @@ describe('FavoritesService', () => {
       service.add(1);
 
       expect(service.favorites().filter((id) => id === 1).length).toBe(1);
+    });
+
+    it('should not add invalid pokemon id', () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      service.add(-5);
+      service.add(0);
+
+      expect(service.favorites()).toEqual([]);
+      
+      consoleSpy.mockRestore();
     });
   });
 

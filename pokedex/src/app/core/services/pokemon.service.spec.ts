@@ -245,6 +245,18 @@ describe('PokemonService', () => {
       const req = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/1');
       req.flush(mockPokemonDetailNoArtwork);
     });
+
+    it('should throw error for invalid pokemon id (negative)', () => {
+      expect(() => service.getPokemonById(-1)).toThrow('Invalid Pokemon ID');
+    });
+
+    it('should throw error for invalid pokemon id (zero)', () => {
+      expect(() => service.getPokemonById(0)).toThrow('Invalid Pokemon ID');
+    });
+
+    it('should throw error for invalid pokemon id (too large)', () => {
+      expect(() => service.getPokemonById(999999)).toThrow('Invalid Pokemon ID');
+    });
   });
 
   describe('searchPokemonByName', () => {
@@ -287,6 +299,37 @@ describe('PokemonService', () => {
         'https://pokeapi.co/api/v2/pokemon/notapokemon'
       );
       req.error(new ErrorEvent('Not found'), { status: 404 });
+    });
+
+    it('should return null for empty search term', (done) => {
+      service.searchPokemonByName('').subscribe((pokemon) => {
+        expect(pokemon).toBeNull();
+        done();
+      });
+
+      // Should not make any request
+      httpMock.expectNone(() => true);
+    });
+
+    it('should return null for whitespace-only search term', (done) => {
+      service.searchPokemonByName('   ').subscribe((pokemon) => {
+        expect(pokemon).toBeNull();
+        done();
+      });
+
+      // Should not make any request
+      httpMock.expectNone(() => true);
+    });
+
+    it('should sanitize search input by removing special characters', (done) => {
+      service.searchPokemonByName('bulba<script>saur').subscribe((pokemon) => {
+        expect(pokemon).not.toBeNull();
+        done();
+      });
+
+      // Request should use sanitized name
+      const req = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/bulbasaur');
+      req.flush(mockPokemonDetail);
     });
   });
 
