@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
@@ -11,6 +11,7 @@ import { ALL_TYPES, TYPE_COLORS, Type } from 'src/app/shared/models/type';
   styleUrls: ['./search-filter.component.sass'],
   standalone: true,
   imports: [CommonModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SearchFilterComponent implements OnInit, OnDestroy {
   public searchValue = '';

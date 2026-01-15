@@ -26,7 +26,7 @@
 
       <div class="compare-view__pokemon" *ngIf="pokemon1() as p">
         <button class="compare-view__clear" (click)="clearPokemon1()">×</button>
-        <img [src]="p.image" [alt]="p.name" class="compare-view__pokemon-image" />
+        <img [src]="p.image" [alt]="p.name" class="compare-view__pokemon-image" loading="lazy" />
         <h3 class="compare-view__pokemon-name">{{ capitalize(p.name) }}</h3>
         <div class="compare-view__types">
           <span 
@@ -65,7 +65,7 @@
 
       <div class="compare-view__pokemon" *ngIf="pokemon2() as p">
         <button class="compare-view__clear" (click)="clearPokemon2()">×</button>
-        <img [src]="p.image" [alt]="p.name" class="compare-view__pokemon-image" />
+        <img [src]="p.image" [alt]="p.name" class="compare-view__pokemon-image" loading="lazy" />
         <h3 class="compare-view__pokemon-name">{{ capitalize(p.name) }}</h3>
         <div class="compare-view__types">
           <span 

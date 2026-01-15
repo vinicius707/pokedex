@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import {
   getPokemonNumber,
   PokemonListItem,
@@ -12,6 +12,7 @@ import { TYPE_COLORS, Type } from 'src/app/shared/models/type';
   styleUrls: ['./pokemon-card.component.sass'],
   standalone: true,
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PokemonCardComponent {
   @Input()

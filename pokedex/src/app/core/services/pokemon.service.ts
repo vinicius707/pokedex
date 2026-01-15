@@ -8,7 +8,19 @@ import {
   PokemonAbility,
 } from 'src/app/shared/models/pokemon';
 import { Type } from 'src/app/shared/models/type';
+import {
+  ApiPokemonListResponse,
+  ApiPokemonDetailResponse,
+  ApiTypeResponse,
+} from 'src/app/shared/models/api-responses';
 import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
+import {
+  sanitizeSearchInput,
+  isValidPokemonId,
+  extractPokemonIdFromUrl,
+} from 'src/app/shared/utils/security.utils';
+import { LRUCache } from 'src/app/shared/utils/lru-cache';
+import { retryWithBackoff } from 'src/app/shared/utils/http-retry';
 
 interface TypeFilterData {
   pokemonIds: number[];
@@ -20,11 +32,20 @@ interface TypeFilterData {
 })
 export class PokemonService {
   private readonly API_URL = 'https://pokeapi.co/api/v2';
-  private readonly listCache = new Map<number, PokemonListItem>();
-  private readonly detailsCache = new Map<number, Pokemon>();
-  private readonly typeFilterCache = new Map<Type, TypeFilterData>();
-  private readonly typeFilterPokemonCache = new Map<string, PokemonListItem>();
   private readonly pageSize = 10;
+  private readonly maxConcurrentRequests = 4;
+
+  // Caches com limite de tamanho para evitar memory leaks
+  private readonly listCacheMaxSize = 200;
+  private readonly detailsCacheMaxSize = 100;
+  private readonly typeFilterPokemonCacheMaxSize = 500;
+
+  private readonly listCache = new LRUCache<number, PokemonListItem>(this.listCacheMaxSize);
+  private readonly detailsCache = new LRUCache<number, Pokemon>(this.detailsCacheMaxSize);
+  private readonly typeFilterCache = new Map<Type, TypeFilterData>(); // 18 tipos max, não precisa de LRU
+  private readonly typeFilterPokemonCache = new LRUCache<string, PokemonListItem>(
+    this.typeFilterPokemonCacheMaxSize
+  );
 
   public readonly currentPage = signal(1);
   public readonly totalPokemons = signal(0);
@@ -145,8 +166,11 @@ export class PokemonService {
   public initialize(): void {
     this.loading.set(true);
     this.httpClient
-      .get<any>(`${this.API_URL}/pokemon/?limit=1`)
-      .pipe(map((value) => value.count))
+      .get<ApiPokemonListResponse>(`${this.API_URL}/pokemon/?limit=1`)
+      .pipe(
+        retryWithBackoff({ maxRetries: 3 }),
+        map((value) => value.count)
+      )
       .subscribe({
         next: (count) => {
           this.totalPokemons.set(count);
@@ -188,31 +212,38 @@ export class PokemonService {
     }&limit=${this.pageSize}`;
 
     this.httpClient
-      .get<any>(pokemonsUrl)
+      .get<ApiPokemonListResponse>(pokemonsUrl)
       .pipe(
+        retryWithBackoff({ maxRetries: 2 }),
         map((value) => value.results),
-        map((results: any[]) =>
+        map((results) =>
           results.map((result, index) => ({
             url: result.url,
             position: startPosition + index,
           }))
         ),
         mergeMap((items) => from(items)),
-        mergeMap((item: any) =>
-          this.httpClient
-            .get(item.url)
-            .pipe(map((data: any) => ({ ...data, position: item.position })))
+        mergeMap(
+          (item) =>
+            this.httpClient
+              .get<ApiPokemonDetailResponse>(item.url)
+              .pipe(
+                retryWithBackoff({ maxRetries: 2 }),
+                map((data) => ({ ...data, position: item.position }))
+              ),
+          this.maxConcurrentRequests
         )
       )
       .subscribe({
-        next: (result: any) => {
+        next: (result) => {
           const pokemon: PokemonListItem = {
             id: result.id,
             name: result.name,
             image:
               result.sprites.other?.['official-artwork']?.front_default ||
-              result.sprites.front_default,
-            types: result.types.map((t: any) => t.type.name as Type),
+              result.sprites.front_default ||
+              '',
+            types: result.types.map((t) => t.type.name as Type),
           };
           this.listCache.set(result.position, pokemon);
         },
@@ -233,6 +264,8 @@ export class PokemonService {
 
           if (allLoaded) {
             this.currentPage.set(page);
+            // Pre-carrega a próxima página em background
+            this.preloadAdjacentPage(page + 1);
           }
           this.loading.set(false);
         },
@@ -242,60 +275,103 @@ export class PokemonService {
       });
   }
 
+  /**
+   * Pré-carrega uma página em background sem afetar o loading state
+   */
+  private preloadAdjacentPage(page: number): void {
+    const totalPages = Math.ceil(this.totalPokemons() / this.pageSize);
+    if (page < 1 || page > totalPages) {
+      return;
+    }
+
+    const startPosition = (page - 1) * this.pageSize + 1;
+    const endPosition = Math.min(
+      startPosition + this.pageSize - 1,
+      this.totalPokemons()
+    );
+
+    // Verifica se todos os pokemons já estão em cache
+    let allCached = true;
+    for (let pos = startPosition; pos <= endPosition; pos++) {
+      if (!this.listCache.has(pos)) {
+        allCached = false;
+        break;
+      }
+    }
+
+    if (allCached) {
+      return;
+    }
+
+    const pokemonsUrl = `${this.API_URL}/pokemon/?offset=${
+      startPosition - 1
+    }&limit=${this.pageSize}`;
+
+    // Carrega em background sem afetar loading state
+    this.httpClient
+      .get<ApiPokemonListResponse>(pokemonsUrl)
+      .pipe(
+        retryWithBackoff({ maxRetries: 1 }),
+        map((value) => value.results),
+        map((results) =>
+          results.map((result, index) => ({
+            url: result.url,
+            position: startPosition + index,
+          }))
+        ),
+        mergeMap((items) => from(items)),
+        mergeMap(
+          (item) =>
+            this.httpClient
+              .get<ApiPokemonDetailResponse>(item.url)
+              .pipe(
+                retryWithBackoff({ maxRetries: 1 }),
+                map((data) => ({ ...data, position: item.position }))
+              ),
+          this.maxConcurrentRequests
+        )
+      )
+      .subscribe({
+        next: (result) => {
+          if (!this.listCache.has(result.position)) {
+            const pokemon: PokemonListItem = {
+              id: result.id,
+              name: result.name,
+              image:
+                result.sprites.other?.['official-artwork']?.front_default ||
+                result.sprites.front_default ||
+                '',
+              types: result.types.map((t) => t.type.name as Type),
+            };
+            this.listCache.set(result.position, pokemon);
+          }
+        },
+        // Errors são silenciados para preload em background
+        error: () => {},
+      });
+  }
+
   public getPokemonById(id: number): Observable<Pokemon> {
+    if (!isValidPokemonId(id)) {
+      throw new Error('Invalid Pokemon ID');
+    }
+
     if (this.detailsCache.has(id)) {
       return of(this.detailsCache.get(id)!);
     }
 
-    return this.httpClient.get<any>(`${this.API_URL}/pokemon/${id}`).pipe(
-      map((result) => {
-        const pokemon: Pokemon = {
-          id: result.id,
-          name: result.name,
-          image:
-            result.sprites.other?.['official-artwork']?.front_default ||
-            result.sprites.front_default,
-          sprites: {
-            front_default: result.sprites.front_default,
-            front_shiny: result.sprites.front_shiny,
-            back_default: result.sprites.back_default,
-            back_shiny: result.sprites.back_shiny,
-            other: result.sprites.other,
-          },
-          types: result.types.map((t: any) => t.type.name as Type),
-          stats: result.stats.map(
-            (s: any): PokemonStat => ({
-              name: this.formatStatName(s.stat.name),
-              value: s.base_stat,
-            })
-          ),
-          abilities: result.abilities.map(
-            (a: any): PokemonAbility => ({
-              name: a.ability.name.replace(/-/g, ' '),
-              isHidden: a.is_hidden,
-            })
-          ),
-          height: result.height,
-          weight: result.weight,
-          speciesUrl: result.species.url,
-        };
-        this.detailsCache.set(id, pokemon);
-        return pokemon;
-      })
-    );
-  }
-
-  public searchPokemonByName(name: string): Observable<Pokemon | null> {
     return this.httpClient
-      .get<any>(`${this.API_URL}/pokemon/${name.toLowerCase()}`)
+      .get<ApiPokemonDetailResponse>(`${this.API_URL}/pokemon/${id}`)
       .pipe(
+        retryWithBackoff({ maxRetries: 2 }),
         map((result) => {
           const pokemon: Pokemon = {
             id: result.id,
             name: result.name,
             image:
               result.sprites.other?.['official-artwork']?.front_default ||
-              result.sprites.front_default,
+              result.sprites.front_default ||
+              '',
             sprites: {
               front_default: result.sprites.front_default,
               front_shiny: result.sprites.front_shiny,
@@ -303,15 +379,64 @@ export class PokemonService {
               back_shiny: result.sprites.back_shiny,
               other: result.sprites.other,
             },
-            types: result.types.map((t: any) => t.type.name as Type),
+            types: result.types.map((t) => t.type.name as Type),
             stats: result.stats.map(
-              (s: any): PokemonStat => ({
+              (s): PokemonStat => ({
                 name: this.formatStatName(s.stat.name),
                 value: s.base_stat,
               })
             ),
             abilities: result.abilities.map(
-              (a: any): PokemonAbility => ({
+              (a): PokemonAbility => ({
+                name: a.ability.name.replace(/-/g, ' '),
+                isHidden: a.is_hidden,
+              })
+            ),
+            height: result.height,
+            weight: result.weight,
+            speciesUrl: result.species.url,
+          };
+          this.detailsCache.set(id, pokemon);
+          return pokemon;
+        })
+      );
+  }
+
+  public searchPokemonByName(name: string): Observable<Pokemon | null> {
+    const sanitizedName = sanitizeSearchInput(name);
+    if (!sanitizedName) {
+      return of(null);
+    }
+
+    return this.httpClient
+      .get<ApiPokemonDetailResponse>(
+        `${this.API_URL}/pokemon/${sanitizedName.toLowerCase()}`
+      )
+      .pipe(
+        map((result) => {
+          const pokemon: Pokemon = {
+            id: result.id,
+            name: result.name,
+            image:
+              result.sprites.other?.['official-artwork']?.front_default ||
+              result.sprites.front_default ||
+              '',
+            sprites: {
+              front_default: result.sprites.front_default,
+              front_shiny: result.sprites.front_shiny,
+              back_default: result.sprites.back_default,
+              back_shiny: result.sprites.back_shiny,
+              other: result.sprites.other,
+            },
+            types: result.types.map((t) => t.type.name as Type),
+            stats: result.stats.map(
+              (s): PokemonStat => ({
+                name: this.formatStatName(s.stat.name),
+                value: s.base_stat,
+              })
+            ),
+            abilities: result.abilities.map(
+              (a): PokemonAbility => ({
                 name: a.ability.name.replace(/-/g, ' '),
                 isHidden: a.is_hidden,
               })
@@ -357,17 +482,14 @@ export class PokemonService {
 
     // Busca na API
     this.httpClient
-      .get<any>(`${this.API_URL}/type/${type}`)
+      .get<ApiTypeResponse>(`${this.API_URL}/type/${type}`)
       .pipe(
+        retryWithBackoff({ maxRetries: 2 }),
         map((result) => {
           const pokemonIds: number[] = result.pokemon
-            .map((p: any) => {
-              const url = p.pokemon.url;
-              const idMatch = url.match(/\/pokemon\/(\d+)\//);
-              return idMatch ? parseInt(idMatch[1], 10) : null;
-            })
-            .filter((id: number | null) => id !== null)
-            .sort((a: number, b: number) => a - b);
+            .map((p) => extractPokemonIdFromUrl(p.pokemon.url))
+            .filter((id): id is number => id !== null)
+            .sort((a, b) => a - b);
 
           return {
             pokemonIds,
@@ -425,13 +547,20 @@ export class PokemonService {
 
     this.loading.set(true);
 
-    // Carrega os detalhes dos pokemons
+    // Carrega os detalhes dos pokemons com limite de concorrência
     from(pokemonsToLoad)
       .pipe(
-        mergeMap((pokemonId) =>
-          this.httpClient
-            .get<any>(`${this.API_URL}/pokemon/${pokemonId}`)
-            .pipe(map((data) => ({ data, type })))
+        mergeMap(
+          (pokemonId) =>
+            this.httpClient
+              .get<ApiPokemonDetailResponse>(
+                `${this.API_URL}/pokemon/${pokemonId}`
+              )
+              .pipe(
+                retryWithBackoff({ maxRetries: 2 }),
+                map((data) => ({ data, type }))
+              ),
+          this.maxConcurrentRequests
         ),
         toArray()
       )
@@ -443,8 +572,9 @@ export class PokemonService {
               name: data.name,
               image:
                 data.sprites.other?.['official-artwork']?.front_default ||
-                data.sprites.front_default,
-              types: data.types.map((tp: any) => tp.type.name as Type),
+                data.sprites.front_default ||
+                '',
+              types: data.types.map((tp) => tp.type.name as Type),
             };
             const cacheKey = `${t}-${data.id}`;
             this.typeFilterPokemonCache.set(cacheKey, pokemon);

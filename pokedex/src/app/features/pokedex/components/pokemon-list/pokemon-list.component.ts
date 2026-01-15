@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed } from '@angular/core';
+import { Component, computed, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { PokemonCardComponent } from '../pokemon-card/pokemon-card.component';
 import { SearchFilterComponent } from '../search-filter/search-filter.component';
@@ -25,6 +25,7 @@ interface PaginationInfo {
   styleUrls: ['./pokemon-list.component.sass'],
   standalone: true,
   imports: [CommonModule, PokemonCardComponent, SearchFilterComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PokemonListComponent {
   constructor(
