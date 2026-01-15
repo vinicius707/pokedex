@@ -6,7 +6,11 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
   },
   "private": true,
   "dependencies": {
@@ -26,13 +30,13 @@
     "@angular-devkit/build-angular": "^21.0.0",
     "@angular/cli": "^21.0.0",
     "@angular/compiler-cli": "^21.0.0",
-    "@types/jasmine": "^5.1.0",
-    "jasmine-core": "^5.1.0",
-    "karma": "^6.4.4",
-    "karma-chrome-launcher": "^3.2.0",
-    "karma-coverage": "^2.2.0",
-    "karma-jasmine": "^5.1.0",
-    "karma-jasmine-html-reporter": "^2.1.0",
+    "@playwright/test": "^1.40.0",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^25.0.8",
+    "jest": "^30.0.0-alpha.6",
+    "jest-environment-jsdom": "^30.0.0-alpha.6",
+    "jest-preset-angular": "^16.0.0",
+    "jsdom": "^26.0.0",
     "typescript": "~5.9.0"
   }
 }
