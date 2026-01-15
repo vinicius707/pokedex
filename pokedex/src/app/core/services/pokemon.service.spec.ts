@@ -340,26 +340,362 @@ describe('PokemonService', () => {
       expect(filtered.some((p) => p.id === 1)).toBe(true);
     });
 
-    it('should set selected type', () => {
-      service.setSelectedType('fire' as Type);
-      expect(service.selectedType()).toBe('fire');
-    });
-
-    it('should filter by type', () => {
-      service.setSelectedType('grass' as Type);
-      const filtered = service.filteredPokemons();
-      expect(filtered.every((p) => p.types.includes('grass' as Type))).toBe(true);
-    });
-
     it('should clear filters', () => {
       service.setSearchTerm('test');
-      service.setSelectedType('fire' as Type);
 
       service.clearFilters();
 
       expect(service.searchTerm()).toBe('');
       expect(service.selectedType()).toBeNull();
+      expect(service.typeFilterMode()).toBe(false);
     });
+
+    it('should clear type filter mode when clearing filters', fakeAsync(() => {
+      // First set a type filter to activate type filter mode
+      service.setSelectedType('fire' as Type);
+      
+      // Handle the type API request
+      const typeReq = httpMock.expectOne('https://pokeapi.co/api/v2/type/fire');
+      typeReq.flush({
+        pokemon: [
+          { pokemon: { name: 'charmander', url: 'https://pokeapi.co/api/v2/pokemon/4/' } },
+        ],
+      });
+
+      tick();
+
+      // Handle pokemon detail request
+      const detailReq = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/4');
+      detailReq.flush({ ...mockPokemonDetail, id: 4, name: 'charmander' });
+
+      tick();
+
+      expect(service.typeFilterMode()).toBe(true);
+
+      // Now clear filters
+      service.clearFilters();
+
+      expect(service.typeFilterMode()).toBe(false);
+      expect(service.typeFilterPage()).toBe(1);
+      expect(service.typeFilterTotal()).toBe(0);
+    }));
+  });
+
+  describe('type filter mode', () => {
+    const mockTypeResponse = {
+      pokemon: [
+        { pokemon: { name: 'charmander', url: 'https://pokeapi.co/api/v2/pokemon/4/' } },
+        { pokemon: { name: 'charmeleon', url: 'https://pokeapi.co/api/v2/pokemon/5/' } },
+        { pokemon: { name: 'charizard', url: 'https://pokeapi.co/api/v2/pokemon/6/' } },
+      ],
+    };
+
+    beforeEach(fakeAsync(() => {
+      service = TestBed.inject(PokemonService);
+
+      const countReq = httpMock.expectOne(
+        'https://pokeapi.co/api/v2/pokemon/?limit=1'
+      );
+      countReq.flush({ count: 100 });
+
+      tick();
+
+      const pageReq = httpMock.expectOne(
+        'https://pokeapi.co/api/v2/pokemon/?offset=0&limit=10'
+      );
+      pageReq.flush(mockPokemonListResponse);
+
+      tick();
+
+      const req1 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/1/');
+      req1.flush(mockPokemonDetail);
+
+      const req2 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/2/');
+      req2.flush({ ...mockPokemonDetail, id: 2, name: 'ivysaur' });
+
+      tick();
+    }));
+
+    it('should set type filter mode when selecting a type', fakeAsync(() => {
+      service.setSelectedType('fire' as Type);
+
+      expect(service.typeFilterMode()).toBe(true);
+      expect(service.selectedType()).toBe('fire');
+
+      const typeReq = httpMock.expectOne('https://pokeapi.co/api/v2/type/fire');
+      typeReq.flush(mockTypeResponse);
+
+      tick();
+
+      // Handle pokemon detail requests
+      const req4 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/4');
+      req4.flush({ ...mockPokemonDetail, id: 4, name: 'charmander', types: [{ type: { name: 'fire' } }] });
+
+      const req5 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/5');
+      req5.flush({ ...mockPokemonDetail, id: 5, name: 'charmeleon', types: [{ type: { name: 'fire' } }] });
+
+      const req6 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/6');
+      req6.flush({ ...mockPokemonDetail, id: 6, name: 'charizard', types: [{ type: { name: 'fire' } }] });
+
+      tick();
+
+      expect(service.typeFilterTotal()).toBe(3);
+    }));
+
+    it('should disable type filter mode when selecting null type', fakeAsync(() => {
+      // First enable type filter mode
+      service.setSelectedType('fire' as Type);
+
+      const typeReq = httpMock.expectOne('https://pokeapi.co/api/v2/type/fire');
+      typeReq.flush(mockTypeResponse);
+
+      tick();
+
+      const req4 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/4');
+      req4.flush({ ...mockPokemonDetail, id: 4, name: 'charmander' });
+
+      const req5 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/5');
+      req5.flush({ ...mockPokemonDetail, id: 5, name: 'charmeleon' });
+
+      const req6 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/6');
+      req6.flush({ ...mockPokemonDetail, id: 6, name: 'charizard' });
+
+      tick();
+
+      expect(service.typeFilterMode()).toBe(true);
+
+      // Now disable it
+      service.setSelectedType(null);
+
+      expect(service.typeFilterMode()).toBe(false);
+      expect(service.selectedType()).toBeNull();
+    }));
+
+    it('should use cache when same type is selected again', fakeAsync(() => {
+      // First selection
+      service.setSelectedType('fire' as Type);
+
+      const typeReq = httpMock.expectOne('https://pokeapi.co/api/v2/type/fire');
+      typeReq.flush(mockTypeResponse);
+
+      tick();
+
+      const req4 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/4');
+      req4.flush({ ...mockPokemonDetail, id: 4, name: 'charmander' });
+
+      const req5 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/5');
+      req5.flush({ ...mockPokemonDetail, id: 5, name: 'charmeleon' });
+
+      const req6 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/6');
+      req6.flush({ ...mockPokemonDetail, id: 6, name: 'charizard' });
+
+      tick();
+
+      // Switch to another type and back
+      service.setSelectedType(null);
+      service.setSelectedType('fire' as Type);
+
+      // Should NOT make another type request (using cache)
+      httpMock.expectNone('https://pokeapi.co/api/v2/type/fire');
+    }));
+
+    it('should handle type API error', fakeAsync(() => {
+      service.setSelectedType('fire' as Type);
+
+      const typeReq = httpMock.expectOne('https://pokeapi.co/api/v2/type/fire');
+      typeReq.error(new ErrorEvent('Network error'));
+
+      tick();
+
+      expect(service.loading()).toBe(false);
+      expect(service.typeFilterMode()).toBe(false);
+    }));
+
+    it('should calculate totalPages based on type filter when active', fakeAsync(() => {
+      service.setSelectedType('fire' as Type);
+
+      const typeReq = httpMock.expectOne('https://pokeapi.co/api/v2/type/fire');
+      typeReq.flush(mockTypeResponse);
+
+      tick();
+
+      const req4 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/4');
+      req4.flush({ ...mockPokemonDetail, id: 4, name: 'charmander' });
+
+      const req5 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/5');
+      req5.flush({ ...mockPokemonDetail, id: 5, name: 'charmeleon' });
+
+      const req6 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/6');
+      req6.flush({ ...mockPokemonDetail, id: 6, name: 'charizard' });
+
+      tick();
+
+      // 3 fire pokemons / 10 per page = 1 page
+      expect(service.totalPages()).toBe(1);
+    }));
+  });
+
+  describe('type filter pagination', () => {
+    const mockLargeTypeResponse = {
+      pokemon: Array.from({ length: 25 }, (_, i) => ({
+        pokemon: {
+          name: `pokemon${i + 100}`,
+          url: `https://pokeapi.co/api/v2/pokemon/${i + 100}/`,
+        },
+      })),
+    };
+
+    beforeEach(fakeAsync(() => {
+      service = TestBed.inject(PokemonService);
+
+      const countReq = httpMock.expectOne(
+        'https://pokeapi.co/api/v2/pokemon/?limit=1'
+      );
+      countReq.flush({ count: 100 });
+
+      tick();
+
+      const pageReq = httpMock.expectOne(
+        'https://pokeapi.co/api/v2/pokemon/?offset=0&limit=10'
+      );
+      pageReq.flush(mockPokemonListResponse);
+
+      tick();
+
+      const req1 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/1/');
+      req1.flush(mockPokemonDetail);
+
+      const req2 = httpMock.expectOne('https://pokeapi.co/api/v2/pokemon/2/');
+      req2.flush({ ...mockPokemonDetail, id: 2, name: 'ivysaur' });
+
+      tick();
+    }));
+
+    it('should navigate to next page in type filter mode', fakeAsync(() => {
+      service.setSelectedType('water' as Type);
+
+      const typeReq = httpMock.expectOne('https://pokeapi.co/api/v2/type/water');
+      typeReq.flush(mockLargeTypeResponse);
+
+      tick();
+
+      // Handle first page pokemon requests (10 pokemons)
+      for (let i = 0; i < 10; i++) {
+        const req = httpMock.expectOne(`https://pokeapi.co/api/v2/pokemon/${i + 100}`);
+        req.flush({ ...mockPokemonDetail, id: i + 100, name: `pokemon${i + 100}` });
+      }
+
+      tick();
+
+      expect(service.typeFilterPage()).toBe(1);
+      expect(service.totalPages()).toBe(3); // 25 / 10 = 3 pages
+
+      // Go to next page
+      service.nextPage();
+
+      // Handle second page pokemon requests
+      for (let i = 10; i < 20; i++) {
+        const req = httpMock.expectOne(`https://pokeapi.co/api/v2/pokemon/${i + 100}`);
+        req.flush({ ...mockPokemonDetail, id: i + 100, name: `pokemon${i + 100}` });
+      }
+
+      tick();
+
+      expect(service.typeFilterPage()).toBe(2);
+    }));
+
+    it('should navigate to previous page in type filter mode', fakeAsync(() => {
+      service.setSelectedType('water' as Type);
+
+      const typeReq = httpMock.expectOne('https://pokeapi.co/api/v2/type/water');
+      typeReq.flush(mockLargeTypeResponse);
+
+      tick();
+
+      // Handle first page
+      for (let i = 0; i < 10; i++) {
+        const req = httpMock.expectOne(`https://pokeapi.co/api/v2/pokemon/${i + 100}`);
+        req.flush({ ...mockPokemonDetail, id: i + 100, name: `pokemon${i + 100}` });
+      }
+
+      tick();
+
+      // Go to page 2
+      service.goToPage(2);
+
+      for (let i = 10; i < 20; i++) {
+        const req = httpMock.expectOne(`https://pokeapi.co/api/v2/pokemon/${i + 100}`);
+        req.flush({ ...mockPokemonDetail, id: i + 100, name: `pokemon${i + 100}` });
+      }
+
+      tick();
+
+      expect(service.typeFilterPage()).toBe(2);
+
+      // Go back to page 1 (should use cache)
+      service.previousPage();
+
+      tick();
+
+      expect(service.typeFilterPage()).toBe(1);
+    }));
+
+    it('should go to specific page in type filter mode', fakeAsync(() => {
+      service.setSelectedType('water' as Type);
+
+      const typeReq = httpMock.expectOne('https://pokeapi.co/api/v2/type/water');
+      typeReq.flush(mockLargeTypeResponse);
+
+      tick();
+
+      // Handle first page
+      for (let i = 0; i < 10; i++) {
+        const req = httpMock.expectOne(`https://pokeapi.co/api/v2/pokemon/${i + 100}`);
+        req.flush({ ...mockPokemonDetail, id: i + 100, name: `pokemon${i + 100}` });
+      }
+
+      tick();
+
+      // Go to page 3
+      service.goToPage(3);
+
+      for (let i = 20; i < 25; i++) {
+        const req = httpMock.expectOne(`https://pokeapi.co/api/v2/pokemon/${i + 100}`);
+        req.flush({ ...mockPokemonDetail, id: i + 100, name: `pokemon${i + 100}` });
+      }
+
+      tick();
+
+      expect(service.typeFilterPage()).toBe(3);
+    }));
+
+    it('should not go beyond last page in type filter mode', fakeAsync(() => {
+      service.setSelectedType('water' as Type);
+
+      const typeReq = httpMock.expectOne('https://pokeapi.co/api/v2/type/water');
+      typeReq.flush(mockLargeTypeResponse);
+
+      tick();
+
+      // Handle first page
+      for (let i = 0; i < 10; i++) {
+        const req = httpMock.expectOne(`https://pokeapi.co/api/v2/pokemon/${i + 100}`);
+        req.flush({ ...mockPokemonDetail, id: i + 100, name: `pokemon${i + 100}` });
+      }
+
+      tick();
+
+      // Set to last page manually
+      (service as any).typeFilterPage.set(3);
+
+      // Try to go to next page
+      service.nextPage();
+
+      tick();
+
+      // Should stay on page 3
+      expect(service.typeFilterPage()).toBe(3);
+    }));
   });
 
   describe('pagination navigation', () => {

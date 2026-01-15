@@ -44,7 +44,7 @@ test.describe('Pokemon List', () => {
     expect(count).toBeLessThanOrEqual(10);
   });
 
-  test('should filter pokemon by type', async ({ page }) => {
+  test('should filter pokemon by type via API', async ({ page }) => {
     await page.waitForSelector('.pokemon-card', { timeout: 30000 });
 
     // Click on "fire" type filter
@@ -53,11 +53,88 @@ test.describe('Pokemon List', () => {
     });
     await fireButton.click();
 
-    // Wait for filter to apply
-    await page.waitForTimeout(100);
+    // Wait for API request and loading to complete
+    await page.waitForSelector('.pokemon-card', { timeout: 30000 });
 
     // Verify filter is active
     await expect(fireButton).toHaveClass(/--active/);
+
+    // Verify results counter is displayed
+    const resultsCounter = page.locator('.search-filter__results-count');
+    await expect(resultsCounter).toBeVisible();
+    await expect(resultsCounter).toContainText('Pokémon do tipo');
+  });
+
+  test('should display type filter results count', async ({ page }) => {
+    await page.waitForSelector('.pokemon-card', { timeout: 30000 });
+
+    // Click on "water" type filter
+    const waterButton = page.locator('.search-filter__type-btn', {
+      hasText: 'water',
+    });
+    await waterButton.click();
+
+    // Wait for API request
+    await page.waitForSelector('.search-filter__results-count', { timeout: 30000 });
+
+    // Verify results counter shows type name
+    const resultsType = page.locator('.search-filter__results-type');
+    await expect(resultsType).toHaveText('water');
+  });
+
+  test('should paginate type filter results', async ({ page }) => {
+    await page.waitForSelector('.pokemon-card', { timeout: 30000 });
+
+    // Click on "normal" type filter (has many pokemons)
+    const normalButton = page.locator('.search-filter__type-btn', {
+      hasText: 'normal',
+    });
+    await normalButton.click();
+
+    // Wait for results to load
+    await page.waitForSelector('.pokemon-card', { timeout: 30000 });
+
+    // Check if pagination is visible (normal type has many pokemons)
+    const pagination = page.locator('.pagination');
+    if (await pagination.isVisible()) {
+      // Navigate to next page
+      const nextButton = page.locator('.pagination-button--next');
+      if (await nextButton.isVisible()) {
+        await nextButton.click();
+
+        // Wait for new page to load
+        await page.waitForSelector('.pokemon-card', { timeout: 30000 });
+
+        // Verify page changed
+        const activePage = page.locator('.pagination-number--active');
+        await expect(activePage).toHaveText('2');
+      }
+    }
+  });
+
+  test('should return to all pokemons when clicking "Todos"', async ({ page }) => {
+    await page.waitForSelector('.pokemon-card', { timeout: 30000 });
+
+    // First select a type
+    const fireButton = page.locator('.search-filter__type-btn', {
+      hasText: 'fire',
+    });
+    await fireButton.click();
+    await page.waitForSelector('.pokemon-card', { timeout: 30000 });
+
+    // Click "Todos" to clear type filter
+    const todosButton = page.locator('.search-filter__type-btn', {
+      hasText: 'Todos',
+    });
+    await todosButton.click();
+
+    // Wait for normal list to load
+    await page.waitForSelector('.pokemon-card', { timeout: 30000 });
+
+    // Verify "Todos" is active and results counter is hidden
+    await expect(todosButton).toHaveClass(/--active/);
+    const resultsCounter = page.locator('.search-filter__results-count');
+    await expect(resultsCounter).not.toBeVisible();
   });
 
   test('should clear filters', async ({ page }) => {

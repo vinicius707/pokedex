@@ -13,6 +13,10 @@ describe('SearchFilterComponent', () => {
     mockPokemonService = {
       searchTerm: signal(''),
       selectedType: signal<Type | null>(null),
+      typeFilterMode: signal(false),
+      typeFilterTotal: signal(0),
+      totalPokemons: signal(1350),
+      loading: signal(false),
       setSearchTerm: jest.fn(),
       setSelectedType: jest.fn(),
       clearFilters: jest.fn(),
@@ -217,5 +221,68 @@ describe('SearchFilterComponent', () => {
       // After destroy, setSearchTerm should not be called
       expect(mockPokemonService.setSearchTerm).not.toHaveBeenCalled();
     }));
+  });
+
+  describe('filterInfo', () => {
+    it('should return correct info when type filter is not active', () => {
+      (mockPokemonService.typeFilterMode as ReturnType<typeof signal>).set(false);
+      (mockPokemonService.totalPokemons as ReturnType<typeof signal>).set(1350);
+
+      const info = component.filterInfo();
+
+      expect(info.isTypeFilterActive).toBe(false);
+      expect(info.totalResults).toBe(1350);
+      expect(info.selectedType).toBeNull();
+    });
+
+    it('should return correct info when type filter is active', () => {
+      (mockPokemonService.typeFilterMode as ReturnType<typeof signal>).set(true);
+      (mockPokemonService.typeFilterTotal as ReturnType<typeof signal>).set(52);
+      (mockPokemonService.selectedType as ReturnType<typeof signal>).set('fire');
+
+      const info = component.filterInfo();
+
+      expect(info.isTypeFilterActive).toBe(true);
+      expect(info.totalResults).toBe(52);
+      expect(info.selectedType).toBe('fire');
+    });
+
+    it('should include loading state', () => {
+      (mockPokemonService.loading as ReturnType<typeof signal>).set(true);
+
+      const info = component.filterInfo();
+
+      expect(info.isLoading).toBe(true);
+    });
+  });
+
+  describe('isTypeLoading', () => {
+    it('should return true when loading and type matches selected', () => {
+      (mockPokemonService.loading as ReturnType<typeof signal>).set(true);
+      (mockPokemonService.selectedType as ReturnType<typeof signal>).set('fire');
+
+      expect(component.isTypeLoading('fire' as Type)).toBe(true);
+    });
+
+    it('should return false when not loading', () => {
+      (mockPokemonService.loading as ReturnType<typeof signal>).set(false);
+      (mockPokemonService.selectedType as ReturnType<typeof signal>).set('fire');
+
+      expect(component.isTypeLoading('fire' as Type)).toBe(false);
+    });
+
+    it('should return false when loading but different type', () => {
+      (mockPokemonService.loading as ReturnType<typeof signal>).set(true);
+      (mockPokemonService.selectedType as ReturnType<typeof signal>).set('fire');
+
+      expect(component.isTypeLoading('water' as Type)).toBe(false);
+    });
+
+    it('should return false when loading but no type selected', () => {
+      (mockPokemonService.loading as ReturnType<typeof signal>).set(true);
+      (mockPokemonService.selectedType as ReturnType<typeof signal>).set(null);
+
+      expect(component.isTypeLoading('fire' as Type)).toBe(false);
+    });
   });
 });
