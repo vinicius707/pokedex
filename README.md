@@ -103,12 +103,58 @@ Acesse `http://localhost:4200` no navegador.
 
 ## Scripts Disponíveis
 
-| Comando         | Descrição                                |
-| --------------- | ---------------------------------------- |
-| `npm start`     | Servidor de desenvolvimento (porta 4200) |
-| `npm run build` | Build de produção em `dist/`             |
-| `npm run test`  | Testes unitários com Karma               |
-| `npm run watch` | Build em modo watch                      |
+| Comando              | Descrição                                |
+| -------------------- | ---------------------------------------- |
+| `npm start`          | Servidor de desenvolvimento (porta 4200) |
+| `npm run build`      | Build de produção em `dist/`             |
+| `npm test`           | Testes unitários com Jest                |
+| `npm run test:watch` | Testes em modo watch                     |
+| `npm run test:coverage` | Testes com relatório de cobertura     |
+| `npm run e2e`        | Testes E2E com Playwright                |
+| `npm run e2e:ui`     | Testes E2E com interface gráfica         |
+| `npm run watch`      | Build em modo watch                      |
+
+## Testes
+
+### Testes Unitários (Jest)
+
+O projeto usa Jest com jest-preset-angular para testes unitários:
+
+```bash
+# Rodar todos os testes
+npm test
+
+# Rodar testes em modo watch
+npm run test:watch
+
+# Gerar relatório de cobertura
+npm run test:coverage
+```
+
+**Arquivos de teste:**
+- `src/app/core/services/*.spec.ts` - Testes de services
+- `src/app/features/**/*.spec.ts` - Testes de componentes
+
+### Testes E2E (Playwright)
+
+Testes de integração automatizados com Playwright:
+
+```bash
+# Instalar browsers do Playwright (primeira vez)
+npx playwright install
+
+# Rodar testes E2E
+npm run e2e
+
+# Rodar com interface gráfica
+npm run e2e:ui
+```
+
+**Cenários testados:**
+- Lista de Pokémon e paginação
+- Detalhes do Pokémon
+- Sistema de favoritos
+- Comparador de Pokémon
 
 ## Estrutura do Projeto
 
